@@ -724,38 +724,35 @@ class ProtectionCog(commands.Cog):
      
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
-        if message.author.bot:
+        if message.author.bot or not message.guild:
             return
         
         whitelist = load_whitelist()
-        if is_privileged(Interaction): # Используем функцию проверки для консистентности
-             # Тут мы не проверяем interaction, а проверяем автора сообщения напрямую
-             # Поэтому дублируем логику для сообщения:
-             pass
-
+        
+        # Проверка на права (Владелец, Саппорт или Вайтлист)
         is_staff = (message.author == message.guild.owner or 
-                   any(role.id == SUPPORT_ROLE_ID for role in message.author.roles))
+                   any(role.id == SUPPORT_ROLE_ID for role in message.author.roles) or
+                   message.author.id in whitelist)
 
         if is_staff:
+            # Стафф может пинговать, но мы логируем действие, если это нужно handle_action
             await self.handle_action(message=message)
             return
         
+        # --- ДАЛЕЕ ЛОГИКА ДЛЯ ОБЫЧНЫХ ПОЛЬЗОВАТЕЛЕЙ ---
+
         # Анти-реклама
         if "discord.gg/" in message.content or "discord.com/invite" in message.content:
-            try:
-                await message.delete()
-            except:
-                pass
+            try: await message.delete()
+            except: pass
             return
         
-        # Защита от пингов (обработка)
+        # Защита от пингов
         if "@everyone" in message.content or "@here" in message.content:
-            # Сразу передаем в handle_action, там идет проверка на вайтлист и лимиты
             await self.handle_action(message=message)
-            # Принудительное удаление если не админ (дублируется в handle_action, но тут для гарантии)
-            if not message.author.guild_permissions.administrator:
-                 try: await message.delete()
-                 except: pass
+            # handle_action сам накажет, но тут удаляем сообщение принудительно
+            try: await message.delete()
+            except: pass
             return
         
         # Анти-спам (5 сообщений за 8 секунд)
@@ -773,7 +770,6 @@ class ProtectionCog(commands.Cog):
                 until = datetime.now(timezone.utc) + timedelta(minutes=5)
                 await message.author.timeout(until=until, reason="Пассивная защита: спам сообщениями")
                 self.user_messages[uid] = []
-                # Можно добавить лог
             except:
                 pass
             return
