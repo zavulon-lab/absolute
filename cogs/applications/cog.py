@@ -2,8 +2,12 @@ from disnake.ext import commands
 from disnake import Embed
 import disnake
 from constants import APPLICATION_CHANNEL_ID, APPLICATION_ADMIN_PANEL_ID
+
+# Импорты ваших View
 from .submit_button import ApplicationChannelView
 from .admin_panel import ApplicationAdminView
+from .review_view import ApplicationReviewView  # <--- ДОБАВЛЕН ИМПОРТ
+
 
 class ApplicationsCog(commands.Cog):
     def __init__(self, bot):
@@ -11,12 +15,32 @@ class ApplicationsCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        # 1. ВОССТАНАВЛИВАЕМ КНОПКИ УПРАВЛЕНИЯ ЗАЯВКАМИ (для старых сообщений)
+        self.bot.add_view(ApplicationReviewView())  # <--- ЭТА СТРОКА ОЖИВЛЯЕТ КНОПКИ
+        
+        # Также полезно зарегистрировать View канала подачи (если он тоже с кнопкой)
+        self.bot.add_view(ApplicationChannelView(self.bot))
+        
+        # И админ-панель
+        self.bot.add_view(ApplicationAdminView())
+
+        print("[Applications] Views (кнопки) успешно зарегистрированы.")
+
         # --- КАНАЛ ПОДАЧИ ЗАЯВОК ---
         app_channel = self.bot.get_channel(APPLICATION_CHANNEL_ID)
         if app_channel:
-            await app_channel.purge(limit=10)
+            # Очищаем только последние сообщения бота, чтобы не спамить (по желанию)
+            # await app_channel.purge(limit=10) 
             
-            # Один эмбед
+            # Проверяем, нужно ли отправлять сообщение заново
+            # (чтобы не переотправлять каждый раз при рестарте)
+            last_msg = None
+            async for msg in app_channel.history(limit=5):
+                if msg.author == self.bot.user:
+                    last_msg = msg
+                    break
+            
+            # Если сообщения нет или вы хотите его обновить:
             embed = Embed(
                 title="Оформление заявки в семью.",
                 description=(
@@ -35,14 +59,31 @@ class ApplicationsCog(commands.Cog):
             # Автор "Calogero Famq" СНИЗУ (в футере)
             embed.set_footer(text="Calogero Famq", icon_url=self.bot.user.display_avatar.url)
             
-            await app_channel.send(embed=embed, view=ApplicationChannelView(self.bot))
-            print("[Applications] Канал подачи заявок обновлен.")
+            if last_msg:
+                # Если сообщение уже есть — просто обновляем его (чтобы не моргало)
+                try:
+                    await last_msg.edit(embed=embed, view=ApplicationChannelView(self.bot))
+                    print("[Applications] Сообщение заявки обновлено.")
+                except:
+                    # Если старое сообщение слишком старое или сломано — шлем новое
+                    await app_channel.purge(limit=5)
+                    await app_channel.send(embed=embed, view=ApplicationChannelView(self.bot))
+            else:
+                # Если сообщений нет — шлем новое
+                await app_channel.send(embed=embed, view=ApplicationChannelView(self.bot))
+                print("[Applications] Канал подачи заявок создан.")
+
 
         # --- АДМИН ПАНЕЛЬ ---
         admin_channel = self.bot.get_channel(APPLICATION_ADMIN_PANEL_ID)
         if admin_channel:
-            await admin_channel.purge(limit=10)
-            
+            # Та же логика для админки — лучше обновлять, чем пересоздавать
+            last_admin_msg = None
+            async for msg in admin_channel.history(limit=5):
+                if msg.author == self.bot.user:
+                    last_admin_msg = msg
+                    break
+
             embed = Embed(
                 title="<:freeicontoolbox4873901:1472933974094647449> Управление заявками",
                 description=(
@@ -57,13 +98,19 @@ class ApplicationsCog(commands.Cog):
                 color=disnake.Color.from_rgb(54, 57, 63)
             )
             
-            
             embed.set_thumbnail(url="https://media.discordapp.net/attachments/1336423985794682974/1336423986381754409/6FDCFF59-EFBB-4D26-9E57-50B0F3D61B50.jpg")
-            
             embed.set_footer(text="Calogero Famq • Admin Panel", icon_url=self.bot.user.display_avatar.url)
             
-            await admin_channel.send(embed=embed, view=ApplicationAdminView())
-            print("[Applications] Админ-панель обновлена.")
+            if last_admin_msg:
+                try:
+                    await last_admin_msg.edit(embed=embed, view=ApplicationAdminView())
+                    print("[Applications] Админ-панель обновлена.")
+                except:
+                    await admin_channel.purge(limit=5)
+                    await admin_channel.send(embed=embed, view=ApplicationAdminView())
+            else:
+                await admin_channel.send(embed=embed, view=ApplicationAdminView())
+                print("[Applications] Админ-панель создана.")
 
 
 def setup(bot):

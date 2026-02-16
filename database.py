@@ -1,10 +1,12 @@
+# database.py
+
 import os
 import json
 import sqlite3
 import logging
 from typing import Optional, Dict, List
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # Настройка логирования
@@ -109,6 +111,24 @@ def init_db():
             )
         ''')
         
+        # --- 🔥 ТАБЛИЦА ДЛЯ МОНИТОРИНГА АКТИВНОСТИ СОТРУДНИКОВ ---
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS staff_activity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id INTEGER NOT NULL,
+                staff_id INTEGER NOT NULL,
+                action_type TEXT NOT NULL,
+                target_user_id INTEGER,
+                extra TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_staff_activity_lookup
+            ON staff_activity (guild_id, staff_id, created_at DESC)
+        """)
+        
         # Миграция колонок (если старая база)
         cursor.execute("PRAGMA table_info(giveaways)")
         existing_cols = {row[1] for row in cursor.fetchall()}
@@ -116,7 +136,6 @@ def init_db():
             cursor.execute("ALTER TABLE giveaways ADD COLUMN thumbnail_url TEXT")
         
         logger.info("База данных инициализирована")
-
 
 
 # ========== ЛИЧНЫЕ КАНАЛЫ ==========
@@ -177,50 +196,51 @@ def get_application_form() -> List[Dict]:
         cursor = conn.cursor()
         cursor.execute("SELECT form_data FROM application_form_config ORDER BY id DESC LIMIT 1")
         result = cursor.fetchone()
-        if result: return json.loads(result['form_data'])
-        else: return get_default_application_form()
+        if result:
+            return json.loads(result['form_data'])
+        else:
+            return get_default_application_form()
 
 
 def get_default_application_form() -> List[Dict]:
     return [
         {
-            "type": "text_input", 
-            "label": "Ваш ник в игре | Статик", 
-            "custom_id": "nick_static", 
-            "style": "short", 
-            "required": True, 
-            "placeholder": "Enza | 285906", 
+            "type": "text_input",
+            "label": "Ваш ник в игре | Статик",
+            "custom_id": "nick_static",
+            "style": "short",
+            "required": True,
+            "placeholder": "Enza | 285906",
             "min_length": None, "max_length": None, "options": []
         },
         {
-            "type": "text_input", 
-            "label": "Ваш средний онлайн + часовой пояс?", 
-            "custom_id": "online_tz", 
-            "style": "short", 
-            "required": True, 
-            "placeholder": "5ч | +2 от мск", 
+            "type": "text_input",
+            "label": "Ваш средний онлайн + часовой пояс?",
+            "custom_id": "online_tz",
+            "style": "short",
+            "required": True,
+            "placeholder": "5ч | +2 от мск",
             "min_length": None, "max_length": None, "options": []
         },
         {
-            "type": "text_input", 
-            "label": "Скрин ваших персонажей (imgur/yapix)", 
-            "custom_id": "chars_screen", 
-            "style": "paragraph", 
-            "required": True, 
-            "placeholder": "link", 
+            "type": "text_input",
+            "label": "Скрин ваших персонажей (imgur/yapix)",
+            "custom_id": "chars_screen",
+            "style": "paragraph",
+            "required": True,
+            "placeholder": "link",
             "min_length": None, "max_length": None, "options": []
         },
         {
-            "type": "text_input", 
-            "label": "Откат гг от 5 минут тяги (YOUTUBE/RUTUBE)", 
-            "custom_id": "rollback_link", 
-            "style": "paragraph", 
-            "required": True, 
-            "placeholder": "link", 
+            "type": "text_input",
+            "label": "Откат гг от 5 минут тяги (YOUTUBE/RUTUBE)",
+            "custom_id": "rollback_link",
+            "style": "paragraph",
+            "required": True,
+            "placeholder": "link",
             "min_length": None, "max_length": None, "options": []
         }
     ]
-
 
 
 # ========== УПРАВЛЕНИЕ ID ОБЪЯВЛЕНИЯ (НОВОЕ) ==========
@@ -263,7 +283,8 @@ def get_vacation_data(user_id):
         cursor = conn.cursor()
         cursor.execute('SELECT roles_data FROM vacations WHERE user_id = ?', (user_id,))
         result = cursor.fetchone()
-    if result: return json.loads(result['roles_data'])
+    if result:
+        return json.loads(result['roles_data'])
     return None
 
 
@@ -273,10 +294,7 @@ def delete_vacation_data(user_id):
         cursor.execute('DELETE FROM vacations WHERE user_id = ?', (user_id,))
 
 
-
 # ========== РОЗЫГРЫШИ (ОБНОВЛЕНО) ==========
-
-
 def load_giveaway_data() -> Optional[Dict]:
     """Получить последний активный розыгрыш"""
     with get_db_connection() as conn:
@@ -293,10 +311,11 @@ def load_giveaway_data() -> Optional[Dict]:
 
     # Функция для безопасной загрузки JSON
     def safe_load_list(val):
-        if not val: return []
-        try: return json.loads(val)
+        if not val:
+            return []
+        try:
+            return json.loads(val)
         except:
-            # Обратная совместимость, если там старый формат eval (удалено для безопасности)
             return []
 
     return {
@@ -356,7 +375,6 @@ def save_giveaway_data(data: Dict):
         logger.info(f"Розыгрыш {data.get('id')} сохранён")
 
 
-
 # ========== СТАТУС ЗАЯВОК ==========
 STATUS_FILE = "applications_status.json"
 
@@ -369,14 +387,101 @@ def get_applications_status():
         with open(STATUS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
             return data.get("enabled", True)
-    except: return True
+    except:
+        return True
 
 
 def set_applications_status(enabled: bool):
     try:
         with open(STATUS_FILE, "w", encoding="utf-8") as f:
             json.dump({"enabled": enabled}, f, ensure_ascii=False, indent=4)
-    except: pass
+    except:
+        pass
+
+
+# ========== 🔥 МОНИТОРИНГ АКТИВНОСТИ СОТРУДНИКОВ ==========
+
+def log_staff_action(
+    guild_id: int,
+    staff_id: int,
+    action_type: str,
+    target_user_id: Optional[int] = None,
+    extra: Optional[str] = None
+):
+    """
+    Логирует действие сотрудника
+    action_type: 'accept', 'accept_final', 'deny', 'call', 'chat_created', 'review'
+    """
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO staff_activity (guild_id, staff_id, action_type, target_user_id, extra)
+            VALUES (?, ?, ?, ?, ?)
+        """, (int(guild_id), int(staff_id), str(action_type), int(target_user_id) if target_user_id else None, extra))
+
+
+def get_staff_stats(guild_id: int, staff_id: int, days: int = 7) -> Dict:
+    """Получить статистику сотрудника за последние N дней"""
+    since = (datetime.now() - timedelta(days=days)).isoformat(sep=" ")
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Подсчёт по типам действий
+        cursor.execute("""
+            SELECT action_type, COUNT(*) as count
+            FROM staff_activity
+            WHERE guild_id = ? AND staff_id = ? AND created_at >= ?
+            GROUP BY action_type
+        """, (int(guild_id), int(staff_id), since))
+        
+        stats = {row[0]: row[1] for row in cursor.fetchall()}
+        
+        # Общее количество действий
+        cursor.execute("""
+            SELECT COUNT(*) FROM staff_activity
+            WHERE guild_id = ? AND staff_id = ? AND created_at >= ?
+        """, (int(guild_id), int(staff_id), since))
+        total = cursor.fetchone()[0]
+        
+        # Последнее действие
+        cursor.execute("""
+            SELECT action_type, created_at FROM staff_activity
+            WHERE guild_id = ? AND staff_id = ?
+            ORDER BY created_at DESC LIMIT 1
+        """, (int(guild_id), int(staff_id)))
+        last_action = cursor.fetchone()
+        
+        return {
+            "total": total,
+            "accepts": stats.get("accept", 0) + stats.get("accept_final", 0),  # Объединяем все принятия
+            "denies": stats.get("deny", 0),
+            "calls": stats.get("call", 0),
+            "chats": stats.get("chat_created", 0),
+            "reviews": stats.get("review", 0),
+            "last_action": last_action[0] if last_action else None,
+            "last_action_time": last_action[1] if last_action else None
+        }
+
+
+def get_all_staff_stats(guild_id: int, staff_members: List, days: int = 7) -> List[Dict]:
+    """Получить статистику всех сотрудников"""
+    stats_list = []
+    
+    for member in staff_members:
+        if member.bot:
+            continue
+        
+        stats = get_staff_stats(guild_id, member.id, days)
+        if stats["total"] > 0:  # Показываем только активных
+            stats_list.append({
+                "member": member,
+                "stats": stats
+            })
+    
+    # Сортируем по активности
+    stats_list.sort(key=lambda x: x["stats"]["total"], reverse=True)
+    return stats_list
 
 
 # Инициализация при старте
