@@ -251,64 +251,96 @@ class ActionSelect(View):
 
 class WhitelistModal(Modal):
     def __init__(self):
-        components = [TextInput(label="ID пользователя", custom_id="user_id", placeholder="Введите ID", required=True)]
+        components = [TextInput(
+            label="ID пользователя", 
+            custom_id="user_id", 
+            placeholder="Введите ID", 
+            required=True
+        )]
         super().__init__(title="Добавить в вайтлист", components=components)
 
-
     async def callback(self, interaction: Interaction):
+        # ДОБАВЛЕНА ПРОВЕРКА ПРАВ
+        if not is_privileged(interaction):
+            await interaction.response.send_message(
+                "У вас нет прав для управления вайтлистом!", 
+                ephemeral=True
+            )
+            return
+        
         try:
             uid = int(interaction.text_values["user_id"].strip())
         except ValueError:
             await interaction.response.send_message("Неверный ID.", ephemeral=True)
             return
 
-
         whitelist = load_whitelist()
         if uid in whitelist:
             await interaction.response.send_message("Уже в вайтлисте.", ephemeral=True)
             return
 
-
         add_to_whitelist(uid)
-        
         config["whitelist"] = load_whitelist()
         save_config(config)
         
         member = interaction.guild.get_member(uid)
         name = member.display_name if member else "Неизвестно"
-        await interaction.response.send_message(f" {name} (`{uid}`) добавлен в вайтлист.", ephemeral=True)
+        await interaction.response.send_message(
+            f"{name} (`{uid}`) добавлен в вайтлист.", 
+            ephemeral=True
+        )
         await update_protection_panel(interaction.guild)
+
 
 
 class RemoveWhitelistModal(Modal):
     def __init__(self):
-        components = [TextInput(label="ID пользователя", custom_id="user_id", placeholder="Введите ID для удаления", required=True)]
+        components = [TextInput(
+            label="ID пользователя", 
+            custom_id="user_id", 
+            placeholder="Введите ID для удаления", 
+            required=True
+        )]
         super().__init__(title="Удалить из вайтлиста", components=components)
 
-
     async def callback(self, interaction: Interaction):
+        # ДОБАВЛЕНА ПРОВЕРКА ПРАВ
+        if not is_privileged(interaction):
+            await interaction.response.send_message(
+                "У вас нет прав для управления вайтлистом!", 
+                ephemeral=True
+            )
+            return
+        
         try:
             uid = int(interaction.text_values["user_id"].strip())
         except ValueError:
-            await interaction.response.send_message(" Неверный ID. Введите только цифры.", ephemeral=True)
+            await interaction.response.send_message(
+                "Неверный ID. Введите только цифры.", 
+                ephemeral=True
+            )
             return
-
 
         whitelist = load_whitelist()
         if uid not in whitelist:
-            await interaction.response.send_message(" Этот ID не найден в вайтлисте.", ephemeral=True)
+            await interaction.response.send_message(
+                "Этот ID не найден в вайтлисте.", 
+                ephemeral=True
+            )
             return
 
-
         remove_from_whitelist(uid)
-        
         config["whitelist"] = load_whitelist()
         save_config(config)
         
         member = interaction.guild.get_member(uid)
         name = member.display_name if member else "Неизвестно"
-        await interaction.response.send_message(f" Пользователь **{name}** (`{uid}`) удалён из вайтлиста.", ephemeral=True)
+        await interaction.response.send_message(
+            f"Пользователь **{name}** (`{uid}`) удалён из вайтлиста.", 
+            ephemeral=True
+        )
         await update_protection_panel(interaction.guild)
+
 
 
 class ProtectionConfigView(View):
@@ -332,7 +364,7 @@ class ProtectionConfigView(View):
     )
     async def event_select(self, select: disnake.ui.Select, interaction: disnake.Interaction):
         if not is_privileged(interaction):
-            await interaction.response.send_message("Только владелец или саппорты могут настраивать защиту.", ephemeral=True)
+            await interaction.response.send_message("Только лидеры могут настраивать защиту", ephemeral=True)
             return
         
         event_key = select.values[0]
@@ -353,7 +385,7 @@ class ProtectionConfigView(View):
     @disnake.ui.button(label="Вайтлист", style=ButtonStyle.grey, custom_id="protection_whitelist", emoji="<:freeiconserver12869272:1473431594021949633>")
     async def whitelist_button(self, button: Button, interaction: Interaction):
         if not is_privileged(interaction):
-            await interaction.response.send_message("Только владелец или саппорты могут управлять вайтлистом.", ephemeral=True)
+            await interaction.response.send_message("Только лидеры могут управлять вайт листом", ephemeral=True)
             return
         
         whitelist = load_whitelist()
@@ -511,8 +543,15 @@ class ActionConfigModal(Modal):
         self.event_key = event_key
         self.action = action
 
-
     async def callback(self, interaction: Interaction):
+        # ✅ ДОБАВЛЕНА ПРОВЕРКА ПРАВ
+        if not is_privileged(interaction):
+            await interaction.response.send_message(
+                "❌ У вас нет прав для изменения конфигурации защиты!", 
+                ephemeral=True
+            )
+            return
+        
         try:
             limit_val = int(interaction.text_values["limit_input"].strip())
             duration_val = 0
@@ -522,8 +561,7 @@ class ActionConfigModal(Modal):
             
             if limit_val < 1: raise ValueError
         except ValueError:
-            return await interaction.response.send_message("Ошибка: Введите корректные числа.", ephemeral=True)
-
+            return await interaction.response.send_message("❌ Ошибка: Введите корректные числа.", ephemeral=True)
 
         config["events"][self.event_key] = {
             "action": self.action,
@@ -531,7 +569,6 @@ class ActionConfigModal(Modal):
             "duration": duration_val
         }
         save_config(config)
-
 
         time_text = f"\nВремя изоляции: `{duration_val}` мин." if self.action == "tempban" else ""
         embed = disnake.Embed(
@@ -545,6 +582,7 @@ class ActionConfigModal(Modal):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
         await update_protection_panel(interaction.guild)
+
 
 
 class ProtectionCog(commands.Cog):

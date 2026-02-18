@@ -7,15 +7,14 @@ from constants import *
 import asyncio
 
 
-
-
 class VerificationFinalDecisionView(View):
-    def __init__(self, user: disnake.User):
+    def __init__(self, user: disnake.User, notification_msg_id: int = None):
         super().__init__(timeout=None)
         self.user = user
+        self.notification_msg_id = notification_msg_id
+
 
     async def _close_channel(self, interaction: Interaction):
-       
         await interaction.channel.send("**Канал будет удален через 5 секунд...**")
         await asyncio.sleep(5)
         try:
@@ -23,7 +22,22 @@ class VerificationFinalDecisionView(View):
         except disnake.NotFound:
             pass
         except Exception as e:
-            pass 
+            pass
+
+
+    async def _delete_notification(self, interaction: Interaction):
+        """✅ Удаляет сообщение-вызов из канала уведомлений"""
+        if not self.notification_msg_id:
+            return
+        
+        notification_channel = interaction.guild.get_channel(VERIFICATION_NOTIFICATION_CHANNEL_ID)
+        if notification_channel:
+            try:
+                msg = await notification_channel.fetch_message(self.notification_msg_id)
+                await msg.delete()
+            except (disnake.NotFound, disnake.Forbidden):
+                pass
+
 
     @button(label=" Подтвердить (Выдать роль)", style=ButtonStyle.success, custom_id="final_accept", emoji="<:tick:1473380953245221016>")
     async def final_accept(self, button: Button, interaction: Interaction):
@@ -32,6 +46,7 @@ class VerificationFinalDecisionView(View):
             role = interaction.guild.get_role(VERIFIED_ROLE_ID)
             member = interaction.guild.get_member(self.user.id)
 
+
             if role and member:
                 await member.add_roles(role, reason="Верификация пройдена")
                 
@@ -39,32 +54,25 @@ class VerificationFinalDecisionView(View):
                     embed=Embed(description=f"Роль {role.mention} выдана пользователю {self.user.mention}!", color=disnake.Color.from_rgb(54, 57, 63))
                 )
                 
-                notification_channel = interaction.guild.get_channel(VERIFICATION_NOTIFICATION_CHANNEL_ID)
-                if notification_channel:
-                    embed_notify = Embed(
-                        title="<:tick:1473380953245221016> Верификация успешна",
-                        description=f"Поздравляем! Вы успешно прошли проверку и получили доступ к серверу.",
-                        color=disnake.Color.from_rgb(54, 57, 63),
+                await self._delete_notification(interaction)
+
+                log_channel = interaction.guild.get_channel(LOG_VERIF)
+                if log_channel:
+                    embed_log = Embed(
+                        title="<:tick:1473380953245221016> Верификация: ОДОБРЕНО", 
+                        color=0x3BA55D, 
                         timestamp=datetime.now()
                     )
-                    embed_notify.set_thumbnail(url=self.user.display_avatar.url)
-                    try:
-                        await notification_channel.send(content=self.user.mention, embed=embed_notify)
-                    except: pass
-
-                log_channel = interaction.guild.get_channel(VERIFICATION_LOG_CHANNEL_ID)
-                if log_channel:
-                    embed_log = Embed(title="<:tick:1473380953245221016> Верификация: ОДОБРЕНО", color=0x3BA55D, timestamp=datetime.now())
                     embed_log.add_field(name="Пользователь", value=f"{self.user.mention}\n`{self.user.id}`", inline=True)
                     embed_log.add_field(name="Администратор", value=interaction.user.mention, inline=True)
+                    embed_log.set_thumbnail(url=self.user.display_avatar.url)
                     await log_channel.send(embed=embed_log)
             
             elif not member:
-                 await interaction.followup.send("ользователь вышел с сервера.", ephemeral=True)
+                await interaction.followup.send("Пользователь вышел с сервера.", ephemeral=True)
             else:
                 await interaction.followup.send("Ошибка: Роль VERIFIED_ROLE_ID не найдена.", ephemeral=True)
             
-            # Отключаем кнопки и удаляем канал
             for child in self.children: child.disabled = True
             await interaction.edit_original_response(view=self)
             
@@ -78,23 +86,18 @@ class VerificationFinalDecisionView(View):
     async def final_reject(self, button: Button, interaction: Interaction):
         await interaction.response.defer()
         
-        notification_channel = interaction.guild.get_channel(VERIFICATION_NOTIFICATION_CHANNEL_ID)
-        if notification_channel:
-            embed = Embed(
-                title="<:cross:1473380950770716836> Верификация отклонена",
-                description=f"К сожалению, вы не прошли проверку.",
-                color=0xFF0000,
+        await self._delete_notification(interaction)
+
+        log_channel = interaction.guild.get_channel(LOG_VERIF)
+        if log_channel:
+            embed_log = Embed(
+                title="<:cross:1473380950770716836> Верификация: ОТКАЗАНО (После проверки)", 
+                color=0xFF0000, 
                 timestamp=datetime.now()
             )
-            try:
-                await notification_channel.send(content=self.user.mention, embed=embed)
-            except: pass
-
-        log_channel = interaction.guild.get_channel(VERIFICATION_LOG_CHANNEL_ID)
-        if log_channel:
-            embed_log = Embed(title="<:cross:1473380950770716836> Верификация: ОТКАЗАНО (После проверки)", color=0xFF0000, timestamp=datetime.now())
             embed_log.add_field(name="Пользователь", value=f"{self.user.mention}\n`{self.user.id}`", inline=True)
             embed_log.add_field(name="Администратор", value=interaction.user.mention, inline=True)
+            embed_log.set_thumbnail(url=self.user.display_avatar.url)
             await log_channel.send(embed=embed_log)
 
         await interaction.followup.send(embed=Embed(description=f"<:cross:1473380950770716836> Верификация {self.user.mention} отклонена.", color=0xFF0000))
@@ -110,11 +113,11 @@ class VerificationAdminButtons(View):
         super().__init__(timeout=None)
         self.user = user
 
+
     @button(label="На проверку (Создать канал)", style=ButtonStyle.success, custom_id="accept_verif", emoji="<:tick:1473380953245221016>")
     async def accept(self, button: Button, interaction: Interaction):
-        # Проверка прав
         is_allowed = interaction.user.guild_permissions.administrator or \
-                     any(role.id == CHEAT_HUNTER_ROLE_ID for role in interaction.user.roles)
+                    any(role.id == CHEAT_HUNTER_ROLE_ID for role in interaction.user.roles)
         if not is_allowed:
             await interaction.response.send_message(embed=Embed(description="У вас нет прав!", color=0xFF0000), ephemeral=True)
             return
@@ -126,20 +129,20 @@ class VerificationAdminButtons(View):
             
         target_member = interaction.guild.get_member(self.user.id)
         if not target_member:
-             await interaction.response.send_message("Пользователь покинул сервер.", ephemeral=True)
-             return
+            await interaction.response.send_message("Пользователь покинул сервер.", ephemeral=True)
+            return
 
         await interaction.response.defer(ephemeral=True)
 
         try:
             overwrites = {
-                interaction.guild.default_role: PermissionOverwrite(read_messages=False), # Everyone - нельзя
-                interaction.guild.me: PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True), # Бот - можно
-                interaction.user: PermissionOverwrite(read_messages=True, send_messages=True), # Админ - можно
-                target_member: PermissionOverwrite(read_messages=True, send_messages=True) # Юзер - можно
+                interaction.guild.default_role: PermissionOverwrite(read_messages=False),
+                interaction.guild.me: PermissionOverwrite(read_messages=True, send_messages=True, manage_channels=True),
+                interaction.user: PermissionOverwrite(read_messages=True, send_messages=True),
+                target_member: PermissionOverwrite(read_messages=True, send_messages=True)
             }
 
-            channel_name = f"verify-{target_member.display_name[:80]}"  # Ограничиваем длину имени канала
+            channel_name = f"verify-{target_member.display_name[:80]}"
             new_channel = await interaction.guild.create_text_channel(
                 name=channel_name,
                 category=category,
@@ -162,21 +165,9 @@ class VerificationAdminButtons(View):
                 ),
                 color=disnake.Color.from_rgb(54, 57, 63)
             )
-            await new_channel.send(content=f"{target_member.mention} {interaction.user.mention}", embed=embed_verify, view=VerificationFinalDecisionView(self.user))
-
-            await interaction.followup.send(f"Канал проверки создан: {new_channel.mention}", ephemeral=True)
-
-            button.disabled = True
-            button.label = "На проверке"
-            button.style = ButtonStyle.secondary
             
-            embed = interaction.message.embeds[0]
-            if embed:
-                embed.add_field(name="Статус", value=f"В процессе (Канал: {new_channel.mention})", inline=False)
-                
-                await interaction.message.edit(embed=embed, view=self)
-
             notification_channel = interaction.guild.get_channel(VERIFICATION_NOTIFICATION_CHANNEL_ID)
+            notification_msg_id = None
             if notification_channel:
                 notify_embed = Embed(
                     title="<:freeiconwarning3756712:1473429407980064788> Вызов на проверку",
@@ -184,44 +175,62 @@ class VerificationAdminButtons(View):
                     color=disnake.Color.from_rgb(54, 57, 63)
                 )
                 try:
-                    await notification_channel.send(content=target_member.mention, embed=notify_embed)
-                except: pass
+                    notify_msg = await notification_channel.send(content=target_member.mention, embed=notify_embed)
+                    notification_msg_id = notify_msg.id
+                except: 
+                    pass
+            
+            await new_channel.send(
+                content=f"{target_member.mention} {interaction.user.mention}", 
+                embed=embed_verify, 
+                view=VerificationFinalDecisionView(self.user, notification_msg_id=notification_msg_id)
+            )
+
+            await interaction.followup.send(f"Канал проверки создан: {new_channel.mention}", ephemeral=True)
+
+            # ✅ ОТКЛЮЧАЕМ ОБЕ КНОПКИ (и "На проверку" и "Отказать")
+            for child in self.children:
+                child.disabled = True
+                if child.custom_id == "accept_verif":
+                    child.label = "На проверке"
+                    child.style = ButtonStyle.secondary
+            
+            embed = interaction.message.embeds[0]
+            if embed:
+                embed.add_field(name="Статус", value=f"В процессе (Канал: {new_channel.mention})", inline=False)
+                await interaction.message.edit(embed=embed, view=self)
 
         except disnake.Forbidden:
-             await interaction.followup.send("У бота нет прав создавать каналы или управлять ими в этой категории.", ephemeral=True)
+            await interaction.followup.send("У бота нет прав создавать каналы или управлять ими в этой категории.", ephemeral=True)
         except Exception as e:
-             await interaction.followup.send(f"Ошибка при создании канала: {e}", ephemeral=True)
+            await interaction.followup.send(f"Ошибка при создании канала: {e}", ephemeral=True)
 
 
     @button(label="Отказать (Сразу)", style=ButtonStyle.danger, custom_id="reject_verif", emoji="<:cross:1473380950770716836>")
     async def reject(self, button: Button, interaction: Interaction):
         is_allowed = interaction.user.guild_permissions.administrator or \
-                     any(role.id == CHEAT_HUNTER_ROLE_ID for role in interaction.user.roles)
+                    any(role.id == CHEAT_HUNTER_ROLE_ID for role in interaction.user.roles)
         if not is_allowed:
             await interaction.response.send_message(embed=Embed(description="У вас нет прав!", color=0xFF0000), ephemeral=True)
             return
 
-        notification_channel = interaction.guild.get_channel(VERIFICATION_NOTIFICATION_CHANNEL_ID)
-        if notification_channel:
-            embed = Embed(
-                title="<:cross:1473380950770716836> Верификация отклонена",
-                description=f"Ваша заявка на верификацию была отклонена администрацией.",
-                color=0xFF0000,
+        log_channel = interaction.guild.get_channel(LOG_VERIF)
+        if log_channel:
+            embed_log = Embed(
+                title="<:cross:1473380950770716836> Верификация: ОТКАЗАНО (По заявке)", 
+                color=0xFF0000, 
                 timestamp=datetime.now()
             )
-            try:
-                await notification_channel.send(content=self.user.mention, embed=embed)
-            except: pass
-
-        log_channel = interaction.guild.get_channel(VERIFICATION_LOG_CHANNEL_ID)
-        if log_channel:
-            embed_log = Embed(title="<:cross:1473380950770716836> Верификация: ОТКАЗАНО (По заявке)", color=0xFF0000, timestamp=datetime.now())
             embed_log.add_field(name="Пользователь", value=f"{self.user.mention}\n`{self.user.id}`", inline=True)
             embed_log.add_field(name="Администратор", value=interaction.user.mention, inline=True)
+            embed_log.set_thumbnail(url=self.user.display_avatar.url)
             await log_channel.send(embed=embed_log)
 
         await interaction.response.send_message(embed=Embed(description="<:cross:1473380950770716836> Заявка отклонена.", color=0xFF0000), ephemeral=True)
-        for child in self.children: child.disabled = True
+        
+        # ✅ ОТКЛЮЧАЕМ ОБЕ КНОПКИ
+        for child in self.children: 
+            child.disabled = True
         await interaction.message.edit(view=self)
 
 
@@ -238,6 +247,7 @@ class VerificationRequestModal(Modal):
             )
         ]
         super().__init__(title="Запрос верификации", components=components, timeout=300)
+
 
     async def callback(self, interaction: disnake.ModalInteraction):
         await interaction.response.defer(ephemeral=True)
@@ -277,6 +287,7 @@ class VerificationView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
+
     @button(label="Подать запрос на верификацию", style=ButtonStyle.success, emoji="<:freeiconproofing10988140:1473391799321104485>", custom_id="btn_request_verify")
     async def request_verify_btn(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(VerificationRequestModal())
@@ -285,6 +296,7 @@ class VerificationView(View):
 class VerificationCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -309,6 +321,7 @@ class VerificationCog(commands.Cog):
                 await channel.purge(limit=10)
                 await channel.send(embed=embed, view=VerificationView())
                 print("[Verification] Меню СОЗДАНО (purge & send).")
+
 
 def setup(bot):
     bot.add_cog(VerificationCog(bot))

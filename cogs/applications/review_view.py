@@ -9,6 +9,9 @@ from constants import (
     ACADEMY_CHANNEL_ID,
     VOICE_CHANNEL_ID,
     APPLICATIONS_CATEGORY_ID,
+    ACADEMY_ROLE_ID,
+    NOT_VERIF
+
 )
 from .utils import extract_user_id_from_embed, create_personal_file
 
@@ -162,20 +165,27 @@ class ApplicationReviewView(View):
 
     async def process_acceptance_final(self, interaction: Interaction, member: disnake.Member):
         """ФИНАЛЬНОЕ ПРИНЯТИЕ (АВТО-КУРАТОР)"""
-        # Тот, кто нажал кнопку (Рекрутер), становится куратором
         recruiter = interaction.user
         curator = recruiter 
 
         # 🔥 ЛОГИРУЕМ ПРИНЯТИЕ
         self._log_action(interaction, "accept_final", member.id, details=f"auto_curator={curator.id}")
 
-        # 1. Роль
-        role = interaction.guild.get_role(ACADEMY_CHANNEL_ID)
-        if role:
+        # 1. Роли (ИСПРАВЛЕНО)
+        academy_role = interaction.guild.get_role(ACADEMY_ROLE_ID)  # ⚠️ Было ACADEMY_CHANNEL_ID (это баг!)
+        not_verif_role = interaction.guild.get_role(NOT_VERIF)  # ✅ Добавлена вторая роль
+        
+        roles_to_add = []
+        if academy_role:
+            roles_to_add.append(academy_role)
+        if not_verif_role:
+            roles_to_add.append(not_verif_role)
+        
+        if roles_to_add:
             try:
-                await member.add_roles(role, reason=f"Принят: {recruiter}")
-            except:
-                pass
+                await member.add_roles(*roles_to_add, reason=f"Принят: {recruiter}")
+            except Exception as e:
+                print(f"[Error] Не удалось выдать роли: {e}")
 
         # 2. Удаляем чат уточнений
         await self.find_and_delete_clarification_channel(interaction.guild, member.id)
@@ -294,7 +304,7 @@ class ApplicationReviewView(View):
 
         original_embed = interaction.message.embeds[0]
         original_embed.color = 0x5865F2
-        original_embed.title = "<:freeiconcall3870799:1472668017170186331> Вызван на обзвон"
+        original_embed.title = "<:tick:1473380953245221016> Вызван на обзвон"
         original_embed.set_footer(text=f"Вызвал: {recruiter.display_name}")
         await interaction.message.edit(embed=original_embed)
 

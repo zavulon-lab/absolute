@@ -6,7 +6,7 @@ from database import get_application_form, get_applications_status
 from .utils import migrate_old_form_data
 from .form_modal import CompleteApplicationModal
 # Импортируем константу (убедитесь, что путь к constants верный)
-from constants import ACADEMY_ROLE_ID
+from constants import ACADEMY_ROLE_ID, MAIN_ROLE_ID
 
 class ApplicationSelect(Select):
     def __init__(self, bot):
@@ -36,7 +36,7 @@ class ApplicationSelect(Select):
         )
 
     async def callback(self, interaction: Interaction):
-        if any(role.id == ACADEMY_ROLE_ID for role in interaction.user.roles):
+        if any(role.id in [ACADEMY_ROLE_ID, MAIN_ROLE_ID] for role in interaction.user.roles):
             await interaction.response.send_message(
                 embed=Embed(
                     title="Ошибка", 
@@ -48,6 +48,7 @@ class ApplicationSelect(Select):
             # Сбрасываем меню, чтобы убрать синее выделение
             asyncio.create_task(self.reset_view(interaction.message))
             return
+
 
         # 2. Проверка статуса набора
         if not get_applications_status():
