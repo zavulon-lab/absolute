@@ -547,7 +547,7 @@ class ActionConfigModal(Modal):
         # ✅ ДОБАВЛЕНА ПРОВЕРКА ПРАВ
         if not is_privileged(interaction):
             await interaction.response.send_message(
-                "❌ У вас нет прав для изменения конфигурации защиты!", 
+                "У вас нет прав для изменения конфигурации защиты!", 
                 ephemeral=True
             )
             return

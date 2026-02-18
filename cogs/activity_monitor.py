@@ -145,12 +145,12 @@ def _build_select_options(staff_list: list, dept_type: str) -> list[SelectOption
             accepts = s['accepts']
             denies  = s['denies']
             total   = accepts + denies          # ← только нужные
-            desc = f"✅ {accepts}  ❌ {denies}  | всего: {total}"
+            desc = f"<:tick:1473380953245221016> {accepts}  <:cross:1473380950770716836> {denies}  | всего: {total}"
         else:
             accepts = s.get('verify_accepts', 0)
             rejects = s.get('verify_rejects', 0) + s.get('verify_rejects_final', 0)
             total   = accepts + rejects         # ← только нужные
-            desc = f"✅ {accepts}  ❌ {rejects}  | всего: {total}"
+            desc = f"<:tick:1473380953245221016> {accepts}  <:cross:1473380950770716836> {rejects}  | всего: {total}"
 
         options.append(SelectOption(
             label=member.display_name[:25],

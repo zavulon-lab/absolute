@@ -12,7 +12,6 @@ def create_giveaway_embed(data: dict, bot_user):
         color=AUX_COLOR
     )
     
-    # ✅ Описание (если есть)
     if data.get("description"):
         embed.description = f"{data['description']}\n"
     

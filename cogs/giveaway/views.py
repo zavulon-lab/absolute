@@ -162,10 +162,6 @@ class GiveawayControlView(View):
             f"🎲 Тестовый победитель: <@{winner}>", ephemeral=True
         )
 
-    @disnake.ui.button(label="Зафиксировать побед.", style=ButtonStyle.success, emoji="🏆", row=0)
-    async def pick(self, button: Button, interaction: Interaction):
-        await interaction.response.send_modal(WinnerSelectModal(self.giveaway_id))
-
     @disnake.ui.button(label="Сбросить выбор", style=ButtonStyle.danger, emoji="✖️", row=1)
     async def reset_winners(self, button: Button, interaction: Interaction):
         data = load_giveaway_by_id(self.giveaway_id)
@@ -176,7 +172,7 @@ class GiveawayControlView(View):
         data.pop("preselected_by", None)
         data.pop("preselected_at", None)
         save_giveaway_data(data)
-        await interaction.response.send_message("✅ Предварительные победители сброшены.", ephemeral=True)
+        await interaction.response.send_message("Предварительные победители сброшены.", ephemeral=True)
 
     @disnake.ui.button(label="Обновить Embed", style=ButtonStyle.secondary, emoji="🔄", row=1)
     async def refresh_embed(self, button: Button, interaction: Interaction):
@@ -192,7 +188,7 @@ class GiveawayControlView(View):
             msg = await chan.fetch_message(data["fixed_message_id"])
             embed = create_giveaway_embed(data, interaction.bot.user)
             await msg.edit(embed=embed, view=GiveawayJoinView(data["id"]))
-            await interaction.response.send_message("✅ Embed обновлён!", ephemeral=True)
+            await interaction.response.send_message("Embed обновлён!", ephemeral=True)
 
         except disnake.NotFound:
             await interaction.response.send_message("Сообщение было удалено.", ephemeral=True)

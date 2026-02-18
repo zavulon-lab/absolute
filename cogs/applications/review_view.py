@@ -172,8 +172,8 @@ class ApplicationReviewView(View):
         self._log_action(interaction, "accept_final", member.id, details=f"auto_curator={curator.id}")
 
         # 1. Роли (ИСПРАВЛЕНО)
-        academy_role = interaction.guild.get_role(ACADEMY_ROLE_ID)  # ⚠️ Было ACADEMY_CHANNEL_ID (это баг!)
-        not_verif_role = interaction.guild.get_role(NOT_VERIF)  # ✅ Добавлена вторая роль
+        academy_role = interaction.guild.get_role(ACADEMY_ROLE_ID)  
+        not_verif_role = interaction.guild.get_role(NOT_VERIF)  
         
         roles_to_add = []
         if academy_role:

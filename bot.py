@@ -21,9 +21,7 @@ async def on_ready():
     print(f'ID: {bot.user.id}')
     print('=' * 50)
 
-    # ── Регистрация persistent Views ──────────────────────────────────────
-
-    # Giveaway
+    # ── Giveaway ──────────────────────────────────────────────────────────────
     try:
         from cogs.giveaway.database import load_all_active_giveaways
         from cogs.giveaway.views import GiveawayJoinView, GiveawayAdminPanel
@@ -35,7 +33,7 @@ async def on_ready():
     except Exception as e:
         print(f"[GIVEAWAY] Ошибка регистрации Views: {e}")
 
-    # Events
+    # ── Events ────────────────────────────────────────────────────────────────
     try:
         from cogs.events import EventUserView, MainAdminView, get_current_event
 
@@ -47,7 +45,7 @@ async def on_ready():
     except Exception as e:
         print(f"[EVENTS] Ошибка регистрации Views: {e}")
 
-    # Applications
+    # ── Applications ──────────────────────────────────────────────────────────
     try:
         from cogs.applications.submit_button import ApplicationChannelView
         from cogs.applications.review_view import ApplicationReviewView
@@ -57,6 +55,13 @@ async def on_ready():
         print("[APPLICATIONS] Views восстановлены.")
     except Exception as e:
         print(f"[APPLICATIONS] Ошибка регистрации Views: {e}")
+
+    # ── Navigation ────────────────────────────────────────────────────────────
+    try:
+        from cogs.navigation import NavigationCog
+        print("[NAVIGATION] Ког загружен.")
+    except Exception as e:
+        print(f"[NAVIGATION] Ошибка: {e}")
 
 
 def load_cogs():
@@ -86,7 +91,7 @@ def load_cogs():
                 continue
             try:
                 bot.load_extension(f'cogs.{cog_name}')
-                print(f'✅ Загружен: cogs.{cog_name}')
+                print(f' Загружен: cogs.{cog_name}')
                 loaded += 1
             except Exception:
                 print(f'❌ Ошибка при загрузке cogs.{cog_name}:')
@@ -103,7 +108,7 @@ def load_cogs():
                 module_path = f'cogs.{dirname}'
                 try:
                     bot.load_extension(module_path)
-                    print(f'✅ Загружен модуль: {module_path}')
+                    print(f' Загружен модуль: {module_path}')
                     loaded += 1
                 except commands.ExtensionAlreadyLoaded:
                     print(f'⚠️ {module_path} уже загружен')
@@ -114,14 +119,15 @@ def load_cogs():
             else:
                 print(f'⚠️ Пропущена папка {dirname} (нет __init__.py)')
 
-    critical_cogs = ['cogs.events', 'cogs.giveaway']
+    # ── Критические коги ──────────────────────────────────────────────────────
+    critical_cogs = ['cogs.events', 'cogs.giveaway', 'cogs.navigation']
     for cog_path in critical_cogs:
         if cog_path in bot.extensions:
             print(f'✓ {cog_path} уже загружен')
             continue
         try:
             bot.load_extension(cog_path)
-            print(f'✅ Загружен (приоритет): {cog_path}')
+            print(f' Загружен (приоритет): {cog_path}')
             loaded += 1
         except commands.ExtensionAlreadyLoaded:
             print(f'✓ {cog_path} уже загружен')
