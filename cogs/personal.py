@@ -8,7 +8,7 @@ import os
 # Импорт констант
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from constants import PERSONAL_CHANNEL_REQUEST_ID
+    from constants import PERSONAL_CHANNEL_REQUEST_ID, TIER_1_ROLE_ID, TIER_2_ROLE_ID
 except ImportError:
     PERSONAL_CHANNEL_REQUEST_ID = 0
 
@@ -68,8 +68,19 @@ class MainMenuButtons(View):
         await interaction.response.send_message(embed=embed, view=PortfolioView(), ephemeral=True)
 
 
-    @button(label="Верификация", style=ButtonStyle.gray, emoji="<:freeiconproofing10988140:1473391799321104485>", custom_id="btn_main_verif")
+    @button(label="Верификация", style=ButtonStyle.gray,emoji="<:freeiconproofing10988140:1473391799321104485>", custom_id="btn_main_verif")
     async def verif_btn(self, button: Button, interaction: Interaction):
+        allowed_role_ids = {TIER_1_ROLE_ID, TIER_2_ROLE_ID}
+        if not any(role.id in allowed_role_ids for role in interaction.user.roles):
+            await interaction.response.send_message(
+                embed=Embed(
+                    description="<:cross:1473380950770716836> Для доступа к верификации необходима роль **Tier 1** или **Tier 2**.",
+                    color=0xFF0000
+                ),
+                ephemeral=True
+            )
+            return
+
         embed = Embed(
             title="<:freeiconproofing10988140:1473391799321104485> Проверка на ПО",
             description=(
@@ -83,10 +94,9 @@ class MainMenuButtons(View):
             color=disnake.Color.from_rgb(54, 57, 63)
         )
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473392052283637933/free-icon-checking-3712161.png?ex=69960ac7&is=6994b947&hm=6e371a0f967b11f702cc2187ef1dc744afc639bcc88559a40fafc85a9a23afdd&")
-            
         embed.set_footer(text="Absolute Famq", icon_url=interaction.client.user.display_avatar.url)
-        
         await interaction.response.send_message(embed=embed, view=VerificationView(), ephemeral=True)
+
 
 
     # --- КНОПКА ОТКАТОВ (С ГАЙДОМ) ---

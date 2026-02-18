@@ -3,7 +3,7 @@ import disnake
 import re
 from disnake import Embed, CategoryChannel, HTTPException
 from datetime import datetime
-from constants import CATEGORY_ID, PRIVATE_THREAD_ROLE_ID
+from constants import CATEGORY_ID, TIER_CHECK_ROLE_ID
 from database import set_private_channel, get_private_channel
 
 
@@ -124,7 +124,7 @@ async def create_personal_file(guild, member, curator):
         await personal_channel.set_permissions(member, view_channel=True, send_messages=True)
         await personal_channel.set_permissions(curator, view_channel=True, send_messages=True)
         
-        role = guild.get_role(PRIVATE_THREAD_ROLE_ID)
+        role = guild.get_role(TIER_CHECK_ROLE_ID)
         if role:
             await personal_channel.set_permissions(role, view_channel=True)
 

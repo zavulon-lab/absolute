@@ -3,7 +3,7 @@ from datetime import datetime
 from disnake.ext import commands
 from disnake import Embed, Interaction, TextInputStyle, ButtonStyle, PermissionOverwrite
 from disnake.ui import View, Button, button, TextInput, Modal
-from constants import CATEGORY_ID, PRIVATE_THREAD_ROLE_ID
+from constants import CATEGORY_ID, TIER_CHECK_ROLE_ID
 from database import get_private_channel, set_private_channel
 
 
@@ -101,7 +101,7 @@ class CreatePortfolioModal(Modal):
                 guild.me: PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=True)
             }
             
-            checker_role = guild.get_role(PRIVATE_THREAD_ROLE_ID)
+            checker_role = guild.get_role(TIER_CHECK_ROLE_ID)
             if checker_role:
                 overwrites[checker_role] = PermissionOverwrite(view_channel=True, send_messages=True)
 

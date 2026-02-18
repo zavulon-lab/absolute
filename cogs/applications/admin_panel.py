@@ -480,7 +480,7 @@ class ApplicationAdminSelect(StringSelect):
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
             return
             
-        embed = Embed(title="<:freeiconrules5692161:1472654721117589606> Предпросмотр анкеты", color=disnake.Color.from_rgb(54, 57, 63))
+        embed = Embed(title="<:freeiconsearch7928577:1473402015425237105> Предпросмотр анкеты", color=disnake.Color.from_rgb(54, 57, 63))
         for i, field in enumerate(current_form, 1):
             embed.add_field(name=f"{i}. {field['label']}", value=f"Подсказка: {field.get('placeholder', '-')}", inline=False)
             
