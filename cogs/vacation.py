@@ -59,7 +59,7 @@ class VacationModal(Modal):
             
             log_channel = guild.get_channel(VACATION_LOG_CHANNEL_ID)
             if log_channel:
-                embed_log = Embed(title="<:freeiconcoconuttree3226180:1472661945537789963> Уход в отпуск", color=disnake.Color.from_rgb(54, 57, 63), timestamp=datetime.now())
+                embed_log = Embed(title="<:freeicontravel9494750:1473389342092165211> Уход в отпуск", color=disnake.Color.from_rgb(54, 57, 63), timestamp=datetime.now())
                 embed_log.add_field(name="Пользователь", value=f"{user.mention}\nID: {user.id}", inline=False)
                 embed_log.add_field(name="Ник", value=nick, inline=True)
                 embed_log.add_field(name="Сроки", value=date_range, inline=True)
@@ -83,11 +83,11 @@ class VacationActionsView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(label="Взять отпуск", style=ButtonStyle.primary, custom_id="vacation_take", emoji="<:freeiconcoconuttree3226180:1472661945537789963>")
+    @button(label="Взять отпуск", style=ButtonStyle.primary, custom_id="vacation_take", emoji="<:freeicontravel9494750:1473389342092165211>")
     async def take_vacation(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(VacationModal())
 
-    @button(label="Вернуться", style=ButtonStyle.success, custom_id="vacation_return", emoji="<:freeiconhistory1800170:1472662096696049916>")
+    @button(label="Вернуться", style=ButtonStyle.success, custom_id="vacation_return", emoji="<:freeiconexperience5165398:1473390047137890469>")
     async def return_vacation(self, button: Button, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
         user = interaction.user
@@ -119,7 +119,7 @@ class VacationActionsView(View):
             
             log_channel = guild.get_channel(VACATION_LOG_CHANNEL_ID)
             if log_channel:
-                embed_log = Embed(title="<:freeiconhistory1800170:1472662096696049916> Возвращение", color=disnake.Color.from_rgb(54, 57, 63), timestamp=datetime.now())
+                embed_log = Embed(title="<:freeiconexperience5165398:1473390047137890469> Возвращение", color=disnake.Color.from_rgb(54, 57, 63), timestamp=datetime.now())
                 embed_log.add_field(name="Пользователь", value=f"{user.mention} вернулся в строй.")
                 await log_channel.send(embed=embed_log)
 

@@ -30,10 +30,10 @@ class MainMenuButtons(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(label="Отпуск", style=ButtonStyle.secondary, emoji="<:vocation:1472655821845299302>", custom_id="btn_main_vacation")
+    @button(label="Отпуск", style=ButtonStyle.secondary, emoji="<:freeicontravel9494750:1473389342092165211>", custom_id="btn_main_vacation")
     async def vacation_btn(self, button: Button, interaction: Interaction):
         embed = Embed(
-            title="<:vocation:1472655821845299302> Подать заявку на отпуск",
+            title="<:freeicontravel9494750:1473389342092165211> Подать заявку на отпуск",
             description=(
                 "Устали от игры или есть другие причины взять паузу? Просто заполните анкету.\n\n"
                 "• При отправке формы для отпуска с вас будут сняты все роли и выдана роль инактив\n"
@@ -41,71 +41,71 @@ class MainMenuButtons(View):
             ),
             color=disnake.Color.from_rgb(54, 57, 63)
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1472657274949337138/image.png?ex=69935e76&is=69920cf6&hm=589aef1828709b445bb13026f3ed41c95f6cd55e00c4aba78bb445e1e06246af&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473389690903330996/free-icon-travel-2832064.png?ex=69960894&is=6994b714&hm=d3904fe4aeae2451b9a724e70e91b4e397b3e7b0e09659d93e92f6d019d7b3ea&")
         
         # Добавляем футер
-        embed.set_footer(text="Calogero Famq", icon_url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="Absolute Famq", icon_url=interaction.client.user.display_avatar.url)
         
         await interaction.response.send_message(embed=embed, view=VacationActionsView(), ephemeral=True)
 
 
-    @button(label="Получение Tier", style=ButtonStyle.gray, emoji="<:Radiant_Rank:1472659589701963787>", custom_id="btn_main_tier")
+    @button(label="Создать портфель", style=ButtonStyle.gray, emoji="<:freeiconbriefcase3158116:1473390673054011529>", custom_id="btn_main_tier")
     async def tier_btn(self, button: Button, interaction: Interaction):
         embed = Embed(
-            title="<:freeiconopenfolder12075402:1472674638239633590> Создание портфеля",
+            title="<:freeiconbriefcase3158116:1473390673054011529> Создание портфеля",
             description=(
-                "• В приватном канале люди с опытом оценят ваши откаты и решат — повысить вам тир.\n"
+                "• В приватном канале люди с опытом отслеживают вашу активность и прогресс.\n"
                 "• Видеоматериалы желательно заливать на [YouTube](https://youtube.com), [Rutube](https://rutube.ru)\n"
                 "• Профиль можно создавать только один раз, после создания профиля откаты и скрины отправляйте в свой личный профиль"
             ),  
             color=disnake.Color.from_rgb(54, 57, 63) 
         )
-        embed.set_thumbnail(url="https://em-content.zobj.net/source/microsoft-teams/337/file-folder_1f4c1.png") 
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473390908429963334/free-icon-documents-1548205.png?ex=699609b6&is=6994b836&hm=71ed9aef4240a96d060d89400117674b5fbce66a6737bf9cfd7bcf75e8c6c6e9&") 
         
         # Добавляем футер
-        embed.set_footer(text="Calogero Famq", icon_url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="Absolute Famq", icon_url=interaction.client.user.display_avatar.url)
         
         await interaction.response.send_message(embed=embed, view=PortfolioView(), ephemeral=True)
 
 
-    @button(label="Верификация", style=ButtonStyle.gray, emoji="<:freeiconverified4314696:1472660305015341118>", custom_id="btn_main_verif")
+    @button(label="Верификация", style=ButtonStyle.gray, emoji="<:freeiconproofing10988140:1473391799321104485>", custom_id="btn_main_verif")
     async def verif_btn(self, button: Button, interaction: Interaction):
         embed = Embed(
-            title="<:freeiconverified4314696:1472660305015341118> Верификация и проверка на ПО",
+            title="<:freeiconproofing10988140:1473391799321104485> Проверка на ПО",
             description=(
                 "Для доступа к закрытым мероприятиям (капт, mcl) необходимо пройти полную проверку.\n\n"
-                "• **Этапы проверки:**\n"
-                "• **Запрос:** Нажмите «Подать запрос» в меню ниже и укажите причину.\n"
-                "• **Рассмотрение:** Модераторы проверят вашу заявку.\n"
-                "• **Проверка:** Вас вызовут в голосовой канал для проверки на стороннее ПО (читы, макросы).\n\n"
+                " **Этапы проверки:**\n"
+                "> **Запрос:** Нажмите «Подать запрос» в меню ниже и укажите причину.\n"
+                "> **Рассмотрение:** Модераторы проверят вашу заявку.\n"
+                "> **Проверка:** Вас вызовут в голосовой канал для проверки на стороннее ПО (читы, макросы).\n\n"
                 "• *Любая попытка скрыть софт, отказ от проверки или выход из игры во время вызова приведет к бану и ЧС семьи.*"
             ),
             color=disnake.Color.from_rgb(54, 57, 63)
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1472660927445729351/free-icon-assurance-4157131.png?ex=699361dd&is=6992105d&hm=a2bde169c1ef45f7e2ed2b415b38efcb779d5c7201dca8ba052ca4cb40dfcfad&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473392052283637933/free-icon-checking-3712161.png?ex=69960ac7&is=6994b947&hm=6e371a0f967b11f702cc2187ef1dc744afc639bcc88559a40fafc85a9a23afdd&")
             
-        embed.set_footer(text="Calogero Famq", icon_url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="Absolute Famq", icon_url=interaction.client.user.display_avatar.url)
         
         await interaction.response.send_message(embed=embed, view=VerificationView(), ephemeral=True)
 
 
     # --- КНОПКА ОТКАТОВ (С ГАЙДОМ) ---
-    @button(label="Оформить откат", style=ButtonStyle.gray, emoji="<:freeiconyoutube1384060:1472661242941411458>", custom_id="btn_main_rollback")
+    @button(label="Оформить откат", style=ButtonStyle.gray, emoji="<:freeiconvideoplayer1376287:1473393337460457585>", custom_id="btn_main_rollback")
     async def rollback_btn(self, button: Button, interaction: Interaction):
         embed = Embed(
-            title="<:freeiconyoutube1384060:1472661242941411458> Как оформить откат",
+            title="<:freeiconvideoplayer1376287:1473393337460457585> Как оформить откат",
             description=(
                 "**Инструкция:**\n"
-                "1. Залейте видео на хостинг.\n"
-                "2. Скопируйте ссылку.\n"
-                "3. Подготовьте таймкоды (если нужно).\n\n"
+                "> 1. Залейте видео на хостинг.\n"
+                "> 2. Скопируйте ссылку.\n"
+                "> 3. Подготовьте таймкоды (если нужно).\n\n"
                 "**Выберите тип мероприятия в меню ниже:**"
             ),
             color=disnake.Color.from_rgb(54, 57, 63)
         )
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1472661416002720008/free-icon-photograph-2201587.png?ex=69936252&is=699210d2&hm=2a0a10fc30f528ae81c6fdc5e9dbd89146ec5dc1638a029ca06d5ddeaf557bf3&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473393444591374510/free-icon-video-editing-1424733.png?ex=69960c13&is=6994ba93&hm=ada95bd44f2c339dcd3a5f560175a6aa03d275bf787a34ccd816830d8f5434e9&")
         
-        embed.set_footer(text="Calogero Famq", icon_url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="Absolute Famq", icon_url=interaction.client.user.display_avatar.url)
         
         await interaction.response.send_message(embed=embed, view=RollbackGuideView(), ephemeral=True)
 
@@ -136,10 +136,10 @@ class PersonalCog(commands.Cog):
                 )
 
                 # Установка маленькой иконки справа (thumbnail)
-                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1472658385102049392/free-icon-boy-4537055.png") 
+                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473388872598552707/free-icon-boss-265674.png?ex=699607d1&is=6994b651&hm=5eb2c25aa5b83690f4fcc008069d110e06d9557772a8e25756ba77fe603b383a&") 
 
                 # Футер с названием семьи и аватаркой бота
-                embed.set_footer(text="Calogero Famq", icon_url=self.bot.user.display_avatar.url)
+                embed.set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url)
 
                 
                 await channel.send(embed=embed, view=MainMenuButtons())

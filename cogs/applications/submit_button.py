@@ -6,7 +6,7 @@ from database import get_application_form, get_applications_status
 from .utils import migrate_old_form_data
 from .form_modal import CompleteApplicationModal
 # Импортируем константу (убедитесь, что путь к constants верный)
-from constants import ACCEPT_ROLE_ID 
+from constants import ACADEMY_ROLE_ID
 
 class ApplicationSelect(Select):
     def __init__(self, bot):
@@ -36,8 +36,7 @@ class ApplicationSelect(Select):
         )
 
     async def callback(self, interaction: Interaction):
-        # 1. Проверка на наличие роли "в семье" (ACCEPT_ROLE_ID)
-        if any(role.id == ACCEPT_ROLE_ID for role in interaction.user.roles):
+        if any(role.id == ACADEMY_ROLE_ID for role in interaction.user.roles):
             await interaction.response.send_message(
                 embed=Embed(
                     title="Ошибка", 

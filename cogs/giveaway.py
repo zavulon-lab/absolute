@@ -24,29 +24,28 @@ from database import load_giveaway_data, save_giveaway_data
 
 # --- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ EMBED ---
 def create_giveaway_embed(data: dict, bot_user: disnake.User):
-    """Генерация красивого эмбеда в стиле Calogero Famq"""
     
     # Если розыгрыш активен — призыв к действию, если завершен — просто описание
     is_finished = data.get("status") == "finished"
     
     embed = Embed(
-        title="🎉 РОЗЫГРЫШ",
+        title="<:freeiconraffle5736412:1473435748207169627> РОЗЫГРЫШ",
         color=disnake.Color.from_rgb(54, 57, 63)
     )
     
     # 1. Приз
     embed.add_field(
-        name="<:freeicongiftbox837891:1472654707859390475> Приз", 
+        name="<:freeicongift6280355:1473434679808884939> Приз", 
         value=f"```fix\n{data['prize']}\n```", 
         inline=False
     )
     
     # 2. Инфо
-    embed.add_field(name="<:freeicondeal2601507:1472654691111407666> Спонсор", value=f"> **{data['sponsor']}**", inline=True)
-    embed.add_field(name="<:freeiconlaurel5021780:1472654712758341793> Победителей", value=f"> **{data['winner_count']}**", inline=True)
+    embed.add_field(name="<:freeiconsponsor1478946:1473435087336112199> Спонсор", value=f"> **{data['sponsor']}**", inline=True)
+    embed.add_field(name="<:freeiconcrown1404959:1473435086010450041> Победителей", value=f"> **{data['winner_count']}**", inline=True)
     
     participants_count = len(data.get("participants", []))
-    embed.add_field(name="<:freeiconteam2763403:1472654736489451581> Участников", value=f"> **{participants_count}**", inline=True)
+    embed.add_field(name="<:freeiconpeopletogether4596136:1473433825680953442> Участников", value=f"> **{participants_count}**", inline=True)
 
     # 3. Таймер (Только если активен)
     if not is_finished:
@@ -65,7 +64,7 @@ def create_giveaway_embed(data: dict, bot_user: disnake.User):
     
     # 5. Футер
     icon_url = bot_user.display_avatar.url if bot_user else None
-    embed.set_footer(text=f"Calogero Famq", icon_url=icon_url)
+    embed.set_footer(text=f"Absolute Famq", icon_url=icon_url)
     
     return embed
 
@@ -123,7 +122,7 @@ class GiveawayPreviewView(View):
         super().__init__(timeout=600)
         self.data = data
 
-    @disnake.ui.button(label="Опубликовать", style=ButtonStyle.success, emoji="<:tik:1472654073814581268>")
+    @disnake.ui.button(label="Опубликовать", style=ButtonStyle.success, emoji="<:tick:1473380953245221016>")
     async def confirm(self, button: Button, interaction: Interaction):
         if not self.data.get("id"):
             self.data["id"] = str(uuid.uuid4())[:8]
@@ -154,7 +153,7 @@ class GiveawayPreviewView(View):
             print(f"[GIVEAWAY] Ошибка отправки розыгрыша: {e}")
             await interaction.response.edit_message(content="Ошибка при публикации розыгрыша.", view=None, embed=None)
 
-    @disnake.ui.button(label="Отмена", style=ButtonStyle.danger, emoji="<:cross:1472654174788255996>")
+    @disnake.ui.button(label="Отмена", style=ButtonStyle.danger, emoji="<:cross:1473380950770716836>")
     async def cancel(self, button: Button, interaction: Interaction):
         await interaction.response.edit_message(content="Создание отменено.", view=None, embed=None)
 
@@ -193,7 +192,7 @@ class GiveawayEditModal(Modal):
         }
 
         preview_embed = create_giveaway_embed(temp_data, interaction.bot.user)
-        preview_embed.title = "<:freeiconrules5692161:1472654721117589606> Предпросмотр"
+        preview_embed.title = "<:freeicondocuments1548205:1473390852234543246> Предпросмотр"
         
         await interaction.response.send_message(embed=preview_embed, view=GiveawayPreviewView(temp_data), ephemeral=True)
 
@@ -232,7 +231,7 @@ class WinnerSelectModal(Modal):
         log_chan = guild.get_channel(GIVEAWAY_LOG_CHANNEL_ID)
         if log_chan:
             emb = Embed(
-                title="<:freeicontoolbox4873901:1472933974094647449> Ручной выбор победителей",
+                title="<:fsdf:1473443687013810176> Ручной выбор победителей",
                 description=f"Администратор {interaction.user.mention} зафиксировал:\n" + ", ".join(mentions),
                 color=disnake.Color.from_rgb(54, 57, 63)
             )
@@ -251,7 +250,7 @@ class GiveawayJoinView(View):
         super().__init__(timeout=None)
         self.giveaway_id = giveaway_id
 
-    @disnake.ui.button(label="Участвовать", style=ButtonStyle.success, emoji="🎉", custom_id="btn_join_giveaway")
+    @disnake.ui.button(label="Участвовать", style=ButtonStyle.success, emoji="<:freeiconraffle5736412:1473435748207169627>", custom_id="btn_join_giveaway")
     async def join(self, button: Button, interaction: Interaction):
         data = load_giveaway_data()
         
@@ -286,11 +285,11 @@ class GiveawayAdminPanel(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @disnake.ui.button(label="Создать", style=ButtonStyle.primary, emoji="<:freeiconplus1828819:1472681225935392858>", custom_id="adm_gw_create", row=0)
+    @disnake.ui.button(label="Создать", style=ButtonStyle.primary, emoji="<:freeiconplus1828819:1473433100737319114>", custom_id="adm_gw_create", row=0)
     async def create(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(GiveawayEditModal())
 
-    @disnake.ui.button(label="Тест Рандома", style=ButtonStyle.secondary, emoji="<:freeiconcasino1714041:1472931325920018665>", custom_id="adm_gw_reroll", row=0)
+    @disnake.ui.button(label="Тест Рандома", style=ButtonStyle.secondary, emoji="<:freeicondice2102161:1473432878841856021>", custom_id="adm_gw_reroll", row=0)
     async def reroll(self, button: Button, interaction: Interaction):
         data = load_giveaway_data()
         if not data or data["status"] != "active":
@@ -303,13 +302,13 @@ class GiveawayAdminPanel(View):
             return
         
         random_winner = random.choice(participants)
-        await interaction.response.send_message(f"<:freeiconcasino1714041:1472931325920018665> Тестовый победитель: <@{random_winner}>", ephemeral=True)
+        await interaction.response.send_message(f"<:freeicondice2102161:1473432878841856021> Тестовый победитель: <@{random_winner}>", ephemeral=True)
 
-    @disnake.ui.button(label="Зафиксировать побед.", style=ButtonStyle.success, emoji="<:freeicontrophy2498693:1472931555713224725>", custom_id="adm_gw_pick", row=1)
+    @disnake.ui.button(label="Выбрать", style=ButtonStyle.success, emoji="<:freeiconman7238426:1473433824091443353>", custom_id="adm_gw_pick", row=0)
     async def pick(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(WinnerSelectModal())
 
-    @disnake.ui.button(label="Участники", style=ButtonStyle.gray, emoji="<:freeiconteam2763403:1472654736489451581>", custom_id="adm_gw_list", row=1)
+    @disnake.ui.button(label="Участники", style=ButtonStyle.gray, emoji="<:freeiconpeopletogether4596136:1473433825680953442>", custom_id="adm_gw_list", row=0)
     async def list_participants(self, button: Button, interaction: Interaction):
         data = load_giveaway_data()
         if not data:
@@ -323,6 +322,7 @@ class GiveawayAdminPanel(View):
 
         view = ParticipantsPaginationView(participants)
         await interaction.response.send_message(embed=view.create_embed(), view=view, ephemeral=True)
+
 
 
 # --- MAIN COG ---
@@ -344,15 +344,15 @@ class GiveawayCog(commands.Cog):
                 except: pass
 
                 embed = Embed(
-                    title="<:freeicongift1043476:1472930460341371021> Управление розыгрышами",
+                    title="<:freeiconrefreshdata12388402:1473401657063899289> Управление розыгрышами",
                     description=(
-                        "**Панель администратора**\n"
+                        "\n"
                         "Здесь вы можете запускать новые ивенты, выбирать победителей и просматривать список участников.\n"
                     ),
-                    color=0x2B2D31
+                    color=disnake.Color.from_rgb(54, 57, 63)
                 )
-                embed.set_thumbnail(url="https://media.discordapp.net/attachments/1336423985794682974/1336423986381754409/6FDCFF59-EFBB-4D26-9E57-50B0F3D61B50.jpg")
-                embed.set_footer(text="Calogero Famq", icon_url=self.bot.user.display_avatar.url)
+                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473432485147840563/free-icon-supermarket-gift-372666.png?ex=6996306f&is=6994deef&hm=47078757bcba58904198fef68565880d646fe254a7e5aa7f93fbae61294fe6e9&")
+                embed.set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url)
                 
                 await channel.send(embed=embed, view=GiveawayAdminPanel())
                 print(f"[GIVEAWAY] Админ-панель обновлена.")
@@ -429,7 +429,7 @@ class GiveawayCog(commands.Cog):
                                     description=f"Вы выиграли в розыгрыше: **{data['prize']}**\nСвяжитесь со спонсором {data['sponsor']} для получения приза.",
                                     color=0xF1C40F,
                                     timestamp=datetime.now()
-                                ).set_footer(text="Calogero Famq", icon_url=self.bot.user.display_avatar.url))
+                                ).set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url))
                         except: pass
         except Exception as e:
             print(f"[GIVEAWAY] Ошибка завершения: {e}")
@@ -439,7 +439,7 @@ class GiveawayCog(commands.Cog):
             emb = Embed(title="Итоги розыгрыша", color=Color.green(), timestamp=datetime.now())
             emb.add_field(name="Приз", value=data["prize"])
             emb.add_field(name="Победители", value=", ".join([str(u) for u in winners]))
-            emb.set_footer(text="Calogero Famq", icon_url=self.bot.user.display_avatar.url)
+            emb.set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url)
             await log_chan.send(embed=emb)
 
 def setup(bot):

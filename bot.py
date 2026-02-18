@@ -2,82 +2,79 @@ import os
 import disnake
 from disnake.ext import commands
 from disnake import Intents
-from bottoken import TOKEN
 import traceback
 
-# Настройка интентов (прав бота на получение событий)
-intents = Intents.default()
-intents.message_content = True  # Читать сообщения (для анти-спама и команд)
-intents.guilds = True           # Работа с серверами
-intents.members = True          # Отслеживание входа/выхода участников (ВАЖНО для выдачи ролей)
-intents.moderation = True       # Для работы Аудит-лога (защиты), банов и киков
-intents.bans = True             # Отслеживание банов
-intents.voice_states = True     # Отслеживание голоса
+# Попробуйте импортировать токен, если файла нет - ошибка
+try:
+    from bottoken import TOKEN
+except ImportError:
+    print("Файл bottoken.py не найден или в нем нет переменной TOKEN")
+    exit()
+
+# Настройка интентов
+intents = Intents.all() # Лучше использовать .all() для тестов, чтобы точно всё работало
+# Если хотите оставить default, то ваш вариант тоже ок, при условии галочек в Dev Portal.
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
-# Глобальный кэш (если нужен для других когов)
-bot.created_channels_cache = {}
 
 @bot.event
 async def on_ready():
     print('=' * 50)
     print(f'{bot.user} успешно запущен!')
     print(f'ID: {bot.user.id}')
-    print(f'Подключен к {len(bot.guilds)} серверам')
     print('=' * 50)
 
 def load_cogs():
-    """Загрузка всех когов из папки ./cogs"""
+    import os
+    
+    # Загрузка основных когов из корневой директории cogs/
     cogs_path = './cogs'
     
-    # Файлы, которые НЕ являются когами
-    ignored_files = ['utils.py', 'constants.py', 'database.py', 'config.py', '__init__.py']
-
     if not os.path.exists(cogs_path):
-        print(f"Папка {cogs_path} не найдена!")
+        print(f"ОШИБКА: Папка {cogs_path} не найдена!")
         return
 
-    for item in os.listdir(cogs_path):
-        item_path = os.path.join(cogs_path, item)
-        
-        # Обработка файлов .py
-        if os.path.isfile(item_path) and item.endswith('.py') and not item.startswith('_'):
-            if item in ignored_files:
+    # Загружаем коги из корневой директории
+    for filename in os.listdir(cogs_path):
+        if filename.endswith('.py') and not filename.startswith('_'):
+            cog_name = filename[:-3]
+            # Добавьте сюда имена ваших вспомогательных файлов
+            if cog_name in [
+                'utils', 'constants', 'database', 'config',
+                'submit_button', 'admin_panel', 'form_modal', 'review_view'
+            ]:
                 continue
-
-            cog_name = item[:-3]
+                
             try:
-                full_cog_name = f'cogs.{cog_name}'
-                if full_cog_name in bot.extensions:
-                    bot.reload_extension(full_cog_name)
-                    print(f'✅ Перезагружен ког (файл): {cog_name}')
-                else:
-                    bot.load_extension(full_cog_name)
-                    print(f'✅ Загружен ког (файл): {cog_name}')
+                bot.load_extension(f'cogs.{cog_name}')
+                print(f'Загружен ког: {cog_name}')
             except Exception as e:
-                print(f'❌ Ошибка загрузки {cog_name}: {e}')
-                traceback.print_exc()
-        
-        # Обработка папок-пакетов
-        elif os.path.isdir(item_path) and not item.startswith('_') and not item.startswith('.'):
-            if os.path.exists(os.path.join(item_path, '__init__.py')):
-                try:
-                    full_cog_name = f'cogs.{item}'
-                    if full_cog_name in bot.extensions:
-                        bot.reload_extension(full_cog_name)
-                        print(f'✅ Перезагружен ког (пакет): {item}')
-                    else:
-                        bot.load_extension(full_cog_name)
-                        print(f'✅ Загружен ког (пакет): {item}')
-                except Exception as e:
-                    print(f'❌ Ошибка загрузки пакета {item}: {e}')
-                    traceback.print_exc()
+                print(f'Ошибка при загрузке {cog_name}:')
+                traceback.print_exc() # Выведет полный текст ошибки
+
+    # Загружаем коги из поддиректорий
+    for dirname in os.listdir(cogs_path):
+        subdir_path = os.path.join(cogs_path, dirname)
+        if os.path.isdir(subdir_path):
+            init_file = os.path.join(subdir_path, '__init__.py')
+            if os.path.exists(init_file):
+                module_path = f'cogs.{dirname}'
+                
+                # Исключаем вспомогательные подкаталоги
+                skip_dirs = ['utils', 'config', 'constants', 'database']
+                if not any(skip_dir in module_path for skip_dir in skip_dirs):
+                    try:
+                        bot.load_extension(module_path)
+                        print(f'Загружен ког: {module_path}')
+                    except Exception as e:
+                        print(f'Ошибка при загрузке {module_path}:')
+                        traceback.print_exc() # Выведет полный текст ошибки
 
 if __name__ == "__main__":
-    # Сначала загружаем коги, потом запускаем бота
     load_cogs()
     try:
         bot.run(TOKEN)
+    except disnake.LoginFailure:
+        print("Неверный токен бота!")
     except Exception as e:
-        print(f"Критическая ошибка при запуске бота: {e}")
+        print(f"Критическая ошибка: {e}")

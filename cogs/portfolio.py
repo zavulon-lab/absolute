@@ -116,7 +116,7 @@ class CreatePortfolioModal(Modal):
             set_private_channel(str(user.id), new_channel.id)
             
             embed = Embed(
-            title="<:freeiconopenfolder12075402:1472674638239633590> Личный портфель",
+            title="<:freeicondocuments1548205:1473390852234543246> Личный портфель",
             description=(
                 f"**Владелец:** {user.mention}\n"
                 f"**Дата создания:** {datetime.now().strftime('%d.%m.%Y')}"
@@ -140,7 +140,7 @@ class PortfolioView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(label="Создать личный портфель", style=ButtonStyle.primary, emoji="<:freeiconcreatefolder12075409:1472663668205555784>", custom_id="btn_create_portfolio")
+    @button(label="Создать личный портфель", style=ButtonStyle.primary, emoji="<:freeicondocuments1548205:1473390852234543246>", custom_id="btn_create_portfolio")
     async def create_portfolio_btn(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(CreatePortfolioModal())
 

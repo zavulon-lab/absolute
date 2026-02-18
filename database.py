@@ -7,7 +7,7 @@ import logging
 from typing import Optional, Dict, List
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-
+import time # Добавили time для работы с timestamp
 
 # Настройка логирования
 logging.basicConfig(
@@ -16,9 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 DB_PATH = "bot_data.db"
-
 
 @contextmanager
 def get_db_connection():
@@ -37,7 +35,6 @@ def get_db_connection():
     finally:
         if conn:
             conn.close()
-
 
 def init_db():
     """Инициализация базы данных"""
@@ -129,6 +126,14 @@ def init_db():
             ON staff_activity (guild_id, staff_id, created_at DESC)
         """)
         
+        # --- 🧊 ТАБЛИЦА ДЛЯ КУЛДАУНОВ ЗАЯВОК (НОВОЕ) ---
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS application_cooldowns (
+                user_id INTEGER PRIMARY KEY,
+                unban_timestamp REAL
+            )
+        ''')
+
         # Миграция колонок (если старая база)
         cursor.execute("PRAGMA table_info(giveaways)")
         existing_cols = {row[1] for row in cursor.fetchall()}
@@ -136,7 +141,6 @@ def init_db():
             cursor.execute("ALTER TABLE giveaways ADD COLUMN thumbnail_url TEXT")
         
         logger.info("База данных инициализирована")
-
 
 # ========== ЛИЧНЫЕ КАНАЛЫ ==========
 def get_private_channel(user_id: str) -> Optional[int]:
@@ -146,7 +150,6 @@ def get_private_channel(user_id: str) -> Optional[int]:
         result = cursor.fetchone()
         return result['channel_id'] if result else None
 
-
 def set_private_channel(user_id: str, channel_id: int):
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -154,7 +157,6 @@ def set_private_channel(user_id: str, channel_id: int):
             "INSERT OR REPLACE INTO private_channels (user_id, channel_id) VALUES (?, ?)",
             (user_id, channel_id)
         )
-
 
 # ========== СОЗДАННЫЕ КАНАЛЫ (ОТКАТЫ) ==========
 def add_created_channel(channel_id: int, creator_id: int, channel_name: str):
@@ -165,19 +167,16 @@ def add_created_channel(channel_id: int, creator_id: int, channel_name: str):
             (channel_id, creator_id, channel_name)
         )
 
-
 def delete_created_channel(channel_id: int):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM created_channels WHERE channel_id = ?", (channel_id,))
-
 
 def channel_exists(channel_id: int) -> bool:
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT 1 FROM created_channels WHERE channel_id = ?", (channel_id,))
         return cursor.fetchone() is not None
-
 
 # ========== ФОРМА ЗАЯВОК ==========
 def save_application_form(form_fields: List[Dict]):
@@ -190,7 +189,6 @@ def save_application_form(form_fields: List[Dict]):
             (form_json,)
         )
 
-
 def get_application_form() -> List[Dict]:
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -201,21 +199,20 @@ def get_application_form() -> List[Dict]:
         else:
             return get_default_application_form()
 
-
 def get_default_application_form() -> List[Dict]:
     return [
         {
             "type": "text_input",
-            "label": "Ваш ник в игре | Статик",
+            "label": "Ваше имя, ник в игре и статик на 17 сервере",
             "custom_id": "nick_static",
             "style": "short",
             "required": True,
-            "placeholder": "Enza | 285906",
+            "placeholder": "Виталий, Alexis, 344",
             "min_length": None, "max_length": None, "options": []
         },
         {
             "type": "text_input",
-            "label": "Ваш средний онлайн + часовой пояс?",
+            "label": "Ваш средний онлайн + часовой пояс",
             "custom_id": "online_tz",
             "style": "short",
             "required": True,
@@ -224,7 +221,7 @@ def get_default_application_form() -> List[Dict]:
         },
         {
             "type": "text_input",
-            "label": "Скрин ваших персонажей (imgur/yapix)",
+            "label": "Откаты МП и ГГ сайга/спеш 5+ минут ",
             "custom_id": "chars_screen",
             "style": "paragraph",
             "required": True,
@@ -233,15 +230,14 @@ def get_default_application_form() -> List[Dict]:
         },
         {
             "type": "text_input",
-            "label": "Откат гг от 5 минут тяги (YOUTUBE/RUTUBE)",
-            "custom_id": "rollback_link",
+            "label": "Ваша история семей",
+            "custom_id": "Fam_id",
             "style": "paragraph",
             "required": True,
-            "placeholder": "link",
+            "placeholder": "Ag, Blade, Cartel",
             "min_length": None, "max_length": None, "options": []
-        }
+        }, 
     ]
-
 
 # ========== УПРАВЛЕНИЕ ID ОБЪЯВЛЕНИЯ (НОВОЕ) ==========
 def save_announcement_message_id(msg_id: int):
@@ -249,7 +245,6 @@ def save_announcement_message_id(msg_id: int):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ('announcement_msg_id', str(msg_id)))
-
 
 def get_announcement_message_id() -> Optional[int]:
     """Возвращает ID объявления (или None)"""
@@ -259,13 +254,11 @@ def get_announcement_message_id() -> Optional[int]:
         row = cursor.fetchone()
         return int(row['value']) if row else None
 
-
 def clear_announcement_message_id():
     """Удаляет сохранённый ID объявления"""
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('DELETE FROM config WHERE key = ?', ('announcement_msg_id',))
-
 
 # ========== ОТПУСКА ==========
 def save_vacation_data(user_id, roles_list, start_date, end_date, reason):
@@ -277,7 +270,6 @@ def save_vacation_data(user_id, roles_list, start_date, end_date, reason):
             VALUES (?, ?, ?, ?, ?)
         ''', (user_id, roles_json, start_date, end_date, reason))
 
-
 def get_vacation_data(user_id):
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -287,12 +279,10 @@ def get_vacation_data(user_id):
         return json.loads(result['roles_data'])
     return None
 
-
 def delete_vacation_data(user_id):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('DELETE FROM vacations WHERE user_id = ?', (user_id,))
-
 
 # ========== РОЗЫГРЫШИ (ОБНОВЛЕНО) ==========
 def load_giveaway_data() -> Optional[Dict]:
@@ -337,7 +327,6 @@ def load_giveaway_data() -> Optional[Dict]:
         "thumbnail_url": row['thumbnail_url']
     }
 
-
 def save_giveaway_data(data: Dict):
     """Сохранить или обновить данные розыгрыша"""
     with get_db_connection() as conn:
@@ -374,10 +363,8 @@ def save_giveaway_data(data: Dict):
         ))
         logger.info(f"Розыгрыш {data.get('id')} сохранён")
 
-
 # ========== СТАТУС ЗАЯВОК ==========
 STATUS_FILE = "applications_status.json"
-
 
 def get_applications_status():
     if not os.path.exists(STATUS_FILE):
@@ -390,14 +377,12 @@ def get_applications_status():
     except:
         return True
 
-
 def set_applications_status(enabled: bool):
     try:
         with open(STATUS_FILE, "w", encoding="utf-8") as f:
             json.dump({"enabled": enabled}, f, ensure_ascii=False, indent=4)
     except:
         pass
-
 
 # ========== 🔥 МОНИТОРИНГ АКТИВНОСТИ СОТРУДНИКОВ ==========
 
@@ -418,7 +403,6 @@ def log_staff_action(
             INSERT INTO staff_activity (guild_id, staff_id, action_type, target_user_id, extra)
             VALUES (?, ?, ?, ?, ?)
         """, (int(guild_id), int(staff_id), str(action_type), int(target_user_id) if target_user_id else None, extra))
-
 
 def get_staff_stats(guild_id: int, staff_id: int, days: int = 7) -> Dict:
     """Получить статистику сотрудника за последние N дней"""
@@ -463,7 +447,6 @@ def get_staff_stats(guild_id: int, staff_id: int, days: int = 7) -> Dict:
             "last_action_time": last_action[1] if last_action else None
         }
 
-
 def get_all_staff_stats(guild_id: int, staff_members: List, days: int = 7) -> List[Dict]:
     """Получить статистику всех сотрудников"""
     stats_list = []
@@ -483,6 +466,40 @@ def get_all_staff_stats(guild_id: int, staff_members: List, days: int = 7) -> Li
     stats_list.sort(key=lambda x: x["stats"]["total"], reverse=True)
     return stats_list
 
+
+def set_application_cooldown(user_id: int, days: int = 7):
+    """Устанавливает дату, до которой пользователю нельзя подавать заявку"""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        # Вычисляем время разбана (текущее время + N дней в секундах)
+        unban_time = time.time() + (days * 24 * 60 * 60)
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO application_cooldowns (user_id, unban_timestamp)
+            VALUES (?, ?)
+        ''', (user_id, unban_time))
+
+def check_application_cooldown(user_id: int) -> tuple[bool, Optional[float]]:
+    """
+    Проверяет, есть ли у пользователя кулдаун.
+    Возвращает (True, timestamp_разбана), если заблокирован.
+    Возвращает (False, None), если можно подавать.
+    """
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT unban_timestamp FROM application_cooldowns WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+    
+    if row:
+        unban_time = row['unban_timestamp']
+        if time.time() < unban_time:
+            return True, unban_time # Все еще в бане
+        else:
+            # Срок вышел, можно удалить запись (опционально, но полезно для очистки)
+            # Но в данном случае оставим, просто вернем False
+            return False, None
+            
+    return False, None
 
 # Инициализация при старте
 init_db()

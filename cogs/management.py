@@ -104,7 +104,7 @@ class RollbackForm(Modal):
                 private_embed = Embed(
                     title="Откат отправлен",
                     description=f"**Ветка:** {target_thread.mention}\n**Текст:**\n{details}",
-                    color=0x3BA55D,
+                    color=disnake.Color.from_rgb(54, 57, 63),
                     timestamp=datetime.now()
                 )
                 await private_channel.send(embed=private_embed)
@@ -123,8 +123,7 @@ class ThreadSelect(StringSelect):
             label = (thread.name or "Без названия")[:95]
             options.append(SelectOption(
                 label=label,
-                value=str(thread.id),
-                emoji="<:freeiconbranch4765562:1472673844522127370>"
+                value=str(thread.id)
             ))
             
         super().__init__(
@@ -194,7 +193,7 @@ class ThreadSelectView(View):
             next_btn.callback = self.next_callback
             self.add_item(next_btn)
             
-        cancel_btn = Button(label="Вернуться к выбору типа", style=ButtonStyle.gray, row=2, emoji="<:freeiconhistory1800170:1472662096696049916>")
+        cancel_btn = Button(label="Вернуться к выбору типа", style=ButtonStyle.gray, row=2, emoji="<:more:1473380787754762376>")
         cancel_btn.callback = self.cancel_callback
         self.add_item(cancel_btn)
 
@@ -274,7 +273,7 @@ class CategorySelect(StringSelect):
         paginated_view = ThreadSelectView(threads, page=0)
         
         await interaction.response.edit_message(
-            content=f"<:freeiconopenfolder12075402:1472674638239633590> События в канале **{channel.name}** (за последние 7 дней):\nВыберите ветку для загрузки отката:",
+            content=f"<:freeiconwebcreation5738087:1473438765442797688> События в канале **{channel.name}** (за последние 7 дней):\nВыберите ветку для загрузки отката:",
             embed=None,
             view=paginated_view
         )
@@ -389,12 +388,28 @@ class ManagementCog(commands.Cog):
                  except: pass
 
             if admin_channel:
+                # --- УЛУЧШЕННЫЙ ЭМБЕД ---
                 embed = Embed(
-                    title="Админ-панель событий",
-                    description="Управление ветками для откатов и настройки.",
+                    title="<:freeiconnote5326571:1473375425890877511> Панель управления событиями",
+                    description=(
+                        "Добро пожаловать в центр управления откатами.\n"
+                        "Здесь вы можете создавать новые ветки для мероприятий.\n\n"
+                        "**Доступный функционал:**"
+                    ),
                     color=disnake.Color.from_rgb(54, 57, 63),
                 )
                 
+                # Добавляем поля для красоты и информативности
+                embed.add_field(
+                    name="<:freeiconwebcreation5738087:1473438765442797688> Создание веток",
+                    value="Создает приватные ветки для загрузки откатов с ивентов (MCL, Капт).",
+                    inline=False
+                )
+
+                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473439006107897896/free-icon-content-creation-17173597.png?ex=69963682&is=6994e502&hm=d25b1aa389567191ea2bf6dc08d85ab633deea7256d5405c2012b4611bb9f9b4&")
+                embed.set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url)
+                
+                # Логика обновления сообщения (без изменений)
                 last_msg = None
                 async for msg in admin_channel.history(limit=5):
                     if msg.author == self.bot.user:

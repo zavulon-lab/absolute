@@ -79,8 +79,8 @@ class TextFieldEditorModal(Modal):
             required_select = StringSelect(
                 placeholder="Это поле обязательно?",
                 options=[
-                    SelectOption(label="Да, обязательно", value="yes", emoji="<:tik:1472654073814581268>"),
-                    SelectOption(label="Нет, можно пропустить", value="no", emoji="<:cross:1472654174788255996>")
+                    SelectOption(label="Да, обязательно", value="yes", emoji="<:tick:1473380953245221016>"),
+                    SelectOption(label="Нет, можно пропустить", value="no", emoji="<:cross:1473380950770716836>")
                 ],
                 custom_id="required_select"
             )
@@ -229,7 +229,7 @@ class CustomAnnouncementModal(Modal):
                 
                 # Уведомляем админа
                 success_embed = Embed(
-                    title="<:tik:1472654073814581268> Объявление отправлено",
+                    title="<:tick:1473380953245221016> Объявление отправлено",
                     description=f"{'Ваше' if is_custom else 'Стандартное'} объявление опубликовано в канале заявок.",
                     color=disnake.Color.from_rgb(54, 57, 63)
                 )
@@ -249,11 +249,11 @@ class AnnouncementChoiceView(View):
         super().__init__(timeout=120)
         self.interaction_original = interaction_original
 
-    @disnake.ui.button(label="Написать своё объявление", style=ButtonStyle.primary, emoji="<:freeiconadd2013845:1472654674976051200>")
+    @disnake.ui.button(label="Написать своё объявление", style=ButtonStyle.primary, emoji="<:freeiconnote5326571:1473375425890877511>")
     async def custom_announcement(self, button: Button, interaction: Interaction):
         await interaction.response.send_modal(CustomAnnouncementModal(self.interaction_original))
 
-    @disnake.ui.button(label="Отправить стандартное", style=ButtonStyle.secondary, emoji="<:freeiconmegaphone716224:1472678446454014046>")
+    @disnake.ui.button(label="Отправить стандартное", style=ButtonStyle.secondary, emoji="<:freeiconexam5326407:1473375714853261576>")
     async def default_announcement(self, button: Button, interaction: Interaction):
         default_text = "Прием заявок в семью снова открыт. Ждем ваших анкет!"
         
@@ -290,15 +290,15 @@ class ApplicationAdminSelect(StringSelect):
     """Главное меню админ-панели"""
     def __init__(self):
         self.is_enabled = get_applications_status()
-        status_emoji = "<:freeiconpowerbutton4943421:1472679504714666056>" if self.is_enabled else "<:freeiconstop394592:1472679253177925808>"
+        status_emoji = "<:freeiconrocket6699887:1473360986265227325>" if self.is_enabled else "<:freeiconmeteorite6699854:1473360985216782509>"
         status_label = "ВЫКЛЮЧИТЬ прием заявок" if self.is_enabled else "ВКЛЮЧИТЬ прием заявок"
         
         options = [
-            SelectOption(label="Настроить форму", value="configure_form", description="Добавить или изменить вопросы", emoji="<:freeicongear889744:1472678585277092084>"),
-            SelectOption(label="Посмотреть текущую форму", value="view_form", description="Как выглядит анкета сейчас", emoji="<:freeiconrules5692161:1472654721117589606>"),
-            SelectOption(label="Удалить вопрос", value="delete_field", description="Убрать лишний вопрос", emoji="<:freeicondelete3625005:1472679616589205604>"),
+            SelectOption(label="Настроить форму", value="configure_form", description="Добавить или изменить вопросы", emoji="<:freeiconquestion5326501:1473361636046934198>"),
+            SelectOption(label="Посмотреть текущую форму", value="view_form", description="Как выглядит анкета сейчас", emoji="<:freeiconsermon7515746:1473373077818573012>"),
+            SelectOption(label="Удалить вопрос", value="delete_field", description="Убрать лишний вопрос", emoji="<:freeicongrimreaper7515728:1473373897855340617>"),
             SelectOption(label=status_label, value="toggle_status", description="Открыть/Закрыть набор", emoji=status_emoji),
-            SelectOption(label="Сбросить настройки", value="reset_form", description="Вернуть стандартную анкету", emoji="<:freeiconhistory1800170:1472662096696049916>"),
+            SelectOption(label="Сбросить настройки", value="reset_form", description="Вернуть стандартную анкету", emoji="<:freeicongravestone7515635:1473361769987707013>"),
         ]
         
         super().__init__(
@@ -347,7 +347,7 @@ class ApplicationAdminSelect(StringSelect):
         color = 0x3BA55D if new_status else 0xED4245
         
         embed = Embed(
-            title="<:freeiconpowerbutton4943421:1472679504714666056> Статус набора изменен" if new_status else "<:freeiconstop394592:1472679253177925808> Статус набора изменен",
+            title="<:freeiconrocket6699887:1473360986265227325> Статус набора изменен" if new_status else "<:freeiconmeteorite6699854:1473360985216782509> Статус набора изменен",
             description=f"Прием заявок теперь **{status_text}**.",
             color=color
         )
@@ -365,7 +365,7 @@ class ApplicationAdminSelect(StringSelect):
             if channel:
                 async for msg in channel.history(limit=5):
                     if msg.author == interaction.guild.me and msg.embeds and len(msg.embeds) > 0:
-                        if "Calogero Famq" in msg.embeds[0].footer.text if msg.embeds[0].footer else False:
+                        if "Absolute Famq" in msg.embeds[0].footer.text if msg.embeds[0].footer else False:
                             await msg.edit(view=ApplicationChannelView(interaction.bot))
                             break
         except Exception as e:
@@ -456,12 +456,12 @@ class ApplicationAdminSelect(StringSelect):
         
         fields_desc = []
         for i, field in enumerate(current_form, 1):
-            req_mark = "<:tik:1472654073814581268>" if field["required"] else "<:cross:1472654174788255996>"
+            req_mark = "<:tick:1473380953245221016>" if field["required"] else "<:cross:1473380950770716836>"
             type_mark = "Короткий" if field.get("style") == "short" else "Длинный"
             fields_desc.append(f"**{i}. {field['label']}**\n└ {type_mark} | Обязательно: {req_mark}")
         
         embed = Embed(
-            title="<:freeicongear889744:1472678585277092084> Конструктор анкеты",
+            title="<:freeiconsermon7515746:1473373077818573012> Конструктор анкеты",
             description="\n\n".join(fields_desc) if fields_desc else "Нет вопросов",
             color=disnake.Color.from_rgb(54, 57, 63)
         )
@@ -508,7 +508,7 @@ class ApplicationAdminSelect(StringSelect):
         save_application_form(get_default_application_form())
         
         success_embed = Embed(
-            title="<:freeiconhistory1800170:1472662096696049916> Анкета сброшена",
+            title="<:freeicongravestone7515635:1473361769987707013> Анкета сброшена",
             description="Анкета сброшена к стандартным настройкам.",
             color=disnake.Color.from_rgb(54, 57, 63)
         )

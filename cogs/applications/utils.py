@@ -133,7 +133,7 @@ async def create_personal_file(guild, member, curator):
         
         # Приветственное сообщение
         embed = Embed(
-            title="<:freeiconopenfolder12075402:1472674638239633590> Личный портфель",
+            title="<:freeicondocuments1548205:1473390852234543246> Личный портфель",
             description=(
                 f"**Владелец:** {member.mention}\n"
                 f"**Куратор:** {curator.mention}\n"

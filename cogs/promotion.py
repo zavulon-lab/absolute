@@ -40,7 +40,7 @@ class ApplicationDecisionView(View):
         if not channel: return
 
         embed = Embed(
-            title=f"{'✅' if result_type == 'success' else '❌'} Результат квалификации",
+            title=f"{'<:tick:1473380953245221016>' if result_type == 'success' else '<:cross:1473380950770716836>'} Результат повышения",
             description=f"Администрация рассмотрела вашу заявку на **{title}**.",
             color=0x3BA55D if result_type == "success" else 0xFF0000,
             timestamp=datetime.now()
@@ -53,7 +53,7 @@ class ApplicationDecisionView(View):
         
         await channel.send(content=member.mention, embed=embed)
 
-    @button(label="Одобрить Main", style=ButtonStyle.success, emoji="<:tik:1472654073814581268>")
+    @button(label="Одобрить Absolute", style=ButtonStyle.success, emoji="<:tick:1473380953245221016>")
     async def accept_main(self, button: Button, interaction: Interaction):
         if not await self._check_admin(interaction): return
         member = interaction.guild.get_member(self.user_id)
@@ -66,11 +66,11 @@ class ApplicationDecisionView(View):
         if academy_role and academy_role in member.roles: await member.remove_roles(academy_role)
         if main_role: await member.add_roles(main_role)
 
-        await self._send_result_log(interaction, member, "Main статус", "success")
+        await self._send_result_log(interaction, member, "Absolute", "success")
         for child in self.children: child.disabled = True
         await interaction.edit_original_response(view=self)
 
-    @button(label="Выдать Tier 1", style=ButtonStyle.primary, emoji="💎")
+    @button(label="Выдать Tier 1", style=ButtonStyle.primary, emoji="<:freeiconanimal15636581:1473395822484787354>")
     async def accept_t1(self, button: Button, interaction: Interaction):
         if not await self._check_admin(interaction): return
         member = interaction.guild.get_member(self.user_id)
@@ -81,7 +81,7 @@ class ApplicationDecisionView(View):
         for child in self.children: child.disabled = True
         await interaction.edit_original_response(view=self)
 
-    @button(label="Выдать Tier 2", style=ButtonStyle.primary, emoji="💎")
+    @button(label="Выдать Tier 2", style=ButtonStyle.primary, emoji="<:freeiconcrow3599008:1473396674511638610>")
     async def accept_t2(self, button: Button, interaction: Interaction):
         if not await self._check_admin(interaction): return
         member = interaction.guild.get_member(self.user_id)
@@ -92,7 +92,7 @@ class ApplicationDecisionView(View):
         for child in self.children: child.disabled = True
         await interaction.edit_original_response(view=self)
 
-    @button(label="Отклонить", style=ButtonStyle.danger, emoji="<:cross:1472654174788255996>")
+    @button(label="Отклонить", style=ButtonStyle.danger, emoji="<:cross:1473380950770716836>")
     async def reject(self, button: Button, interaction: Interaction):
         if not await self._check_admin(interaction): return
         member = interaction.guild.get_member(self.user_id)
@@ -103,7 +103,7 @@ class ApplicationDecisionView(View):
 class AppModal(Modal):
     def __init__(self, app_type: str):
         self.app_type = app_type
-        title = "Анкета на Main" if app_type == "main" else "Анкета на Tier"
+        title = "Анкета на Absolute" if app_type == "main" else "Анкета на Tier"
         components = [
             TextInput(label="Ваша информация", custom_id="info", style=TextInputStyle.paragraph, placeholder="Ник, стаж, почему вы достойны...", required=True),
             TextInput(label="Доказательства", custom_id="proofs", placeholder="Ссылки на отчеты/видео", required=True)
@@ -114,7 +114,7 @@ class AppModal(Modal):
         admin_channel_id = MAIN_ADMIN_CHANNEL_ID if self.app_type == "main" else TIER_ADMIN_CHANNEL_ID
         channel = interaction.guild.get_channel(admin_channel_id)
         
-        embed = Embed(title=f"📩 Новая заявка: {self.app_type.upper()}", color=FAM_COLOR, timestamp=datetime.now())
+        embed = Embed(title=f"Новая заявка: {self.app_type.upper()}", color=FAM_COLOR, timestamp=datetime.now())
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
         embed.add_field(name="Участник", value=f"{interaction.user.mention} (`{interaction.user.id}`)", inline=False)
         embed.add_field(name="Информация", value=f"```\n{interaction.text_values['info']}\n```", inline=False)
@@ -136,10 +136,10 @@ class MainMenuView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(label="Подать на Main", style=ButtonStyle.success, emoji="🔼", custom_id="btn_main_app")
+    @button(label="Подать на Main", style=ButtonStyle.success, emoji="<:freeiconcrow2185402:1473395821226754283>", custom_id="btn_main_app")
     async def apply_main(self, b, i): await i.response.send_modal(AppModal("main"))
 
-    @button(label="Подать на Tier", style=ButtonStyle.primary, emoji="💎", custom_id="btn_tier_app")
+    @button(label="Подать на Tier", style=ButtonStyle.primary, emoji="<:freeiconanimal15636581:1473395822484787354>", custom_id="btn_tier_app")
     async def apply_tier(self, b, i): await i.response.send_modal(AppModal("tier"))
 
 class ApplicationCog(commands.Cog):
@@ -151,24 +151,23 @@ class ApplicationCog(commands.Cog):
         self.bot.add_view(MainMenuView())
         channel = self.bot.get_channel(ACADEMY_REQUEST_CHANNEL_ID)
         if channel:
-            embed = Embed(title="💠 Центр Квалификации", color=FAM_COLOR)
+            embed = Embed(title="Повышение", color=FAM_COLOR)
             embed.description = (
-                "Приветствуем в системе развития квалификации. Выберите интересующий вас раздел.\n\n"
-                "🔼 **Повышение до Main**\n"
-                "Если вы прошли обучение в академии и готовы вступить в основной состав.\n\n"
-                "💎 **Повышение Tier**\n"
-                "Если вы уже в основном составе и желаете подтвердить свои навыки в стрельбе или управлении."
+                "Приветствуем в системе повышения\n\n"
+                "<:freeiconcrow2185402:1473395821226754283> **Повышение до Absolute**\n"
+                "Для повышения c young до absolute оставьте заявку\n\n"
+                "<:freeiconanimal15636581:1473395822484787354> **Повышение Tier**\n"
+                "Для получения tier оставьте заявку"
             )
             
-            # Thumbnail сервера для основной панели
             if channel.guild.icon:
-                embed.set_thumbnail(url=channel.guild.icon.url)
+                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473396730803392713/free-icon-crow-3599008.png?ex=69960f23&is=6994bda3&hm=849d7df0a86831c679e5e2a43bcbe3d4fae1228c028ebad48c6eb610ba6db1fb&")
             
             embed.set_footer(text="Заявки рассматриваются руководством в течение 24 часов.")
 
             last_msg = None
             async for msg in channel.history(limit=5):
-                if msg.author == self.bot.user and msg.embeds and msg.embeds[0].title == "💠 Центр Квалификации":
+                if msg.author == self.bot.user and msg.embeds and msg.embeds[0].title == "Повышение":
                     last_msg = msg; break
             if last_msg: await last_msg.edit(embed=embed, view=MainMenuView())
             else: await channel.purge(limit=2); await channel.send(embed=embed, view=MainMenuView())

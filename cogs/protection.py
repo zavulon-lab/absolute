@@ -160,14 +160,14 @@ def is_privileged(interaction: Interaction):
 
 
 EVENT_EMOJIS = {
-    "channel_delete": "<:freeicondelete3625005:1472679616589205604>",
-    "channel_create": "<:freeiconplus1828819:1472681225935392858>",
-    "webhook_create": "<:link:1472654744316018843>",
-    "webhook_send": "<:freeiconsending1149588:1472654727257788559>",
-    "ban_member": "<:ban:1472654052763500584>",
-    "kick_member": "<:freeiconblooddrop893529:1472654677735637145>",
-    "everyone_ping": "<:emoji:1472654055343001833>",
-    "here_ping": "<:freeiconnotification1827370:1472654716537409537>"
+    "channel_delete": "<:freeicontrash10654603:1473426946552496211>",
+    "channel_create": "<:freeiconnew14955170:1473426936125456476>",
+    "webhook_create": "<:freeicondrawing14958309:1473426934732947560>",
+    "webhook_send": "<:freeiconpaper13958909:1473426933281722544>",
+    "ban_member": "<:freeicondeletecross9650102:1473426938789101743>",
+    "kick_member": "<:freeicondeletecross9650143:1473426941351559390>",
+    "everyone_ping": "<:freeiconremove13921594:1473427367916601415>",
+    "here_ping": "<:freeiconbell13921787:1473427366633275553>"
 }
 
 
@@ -182,12 +182,12 @@ ACTION_NAMES = {
 
 
 ACTION_EMOJIS = {
-    "ban": "<:ban:1472654052763500584>",
-    "kick": "<:freeiconblooddrop893529:1472654677735637145>",
-    "warn": "<:freeiconalert8452627:1472654676351778816>",
-    "tempban": "<:freeiconclock12476999:1472654689815232834>",
-    "none": "<:tik:1472654073814581268>",
-    "delete": "<:freeicondelete3625005:1472679616589205604>"
+    "ban": "<:freeicondeletecross9650102:1473426938789101743>",
+    "kick": "<:freeicondeletecross9650143:1473426941351559390>",
+    "warn": "<:freeiconwarning3756712:1473429407980064788>",
+    "tempban": "<:freeicongallow1048997:1473429739250257950>",
+    "none": "<:freeiconcctvcamera6826796:1473430037888897215>",
+    "delete": "<:freeicontrash10654603:1473426946552496211>"
 }
 
 
@@ -215,11 +215,11 @@ class ActionSelect(View):
         select = Select(
             placeholder="Выберите действие",
             options=[
-                SelectOption(label="Бан", value="ban", emoji="<:ban:1472654052763500584>"),
-                SelectOption(label="Кик", value="kick", emoji="<:freeiconblooddrop893529:1472654677735637145>"),
-                SelectOption(label="Предупреждение", value="warn", emoji="<:freeiconalert8452627:1472654676351778816>"),
-                SelectOption(label="Временный бан", value="tempban", emoji="<:freeiconclock12476999:1472654689815232834>"),
-                SelectOption(label="Без действий", value="none", emoji="<:tik:1472654073814581268>")
+                SelectOption(label="Бан", value="ban", emoji="<:freeicondeletecross9650102:1473426938789101743>"),
+                SelectOption(label="Кик", value="kick", emoji="<:freeicondeletecross9650143:1473426941351559390>"),
+                SelectOption(label="Предупреждение", value="warn", emoji="<:freeiconwarning3756712:1473429407980064788>"),
+                SelectOption(label="Временный бан", value="tempban", emoji="<:freeicongallow1048997:1473429739250257950>"),
+                SelectOption(label="Без действий", value="none", emoji="<:freeiconcctvcamera6826796:1473430037888897215>")
             ]
         )
         select.callback = self.select_callback
@@ -320,14 +320,14 @@ class ProtectionConfigView(View):
         placeholder="Выберите событие для настройки",
         custom_id="protection_event_select",
         options=[
-            disnake.SelectOption(label="Удаление канала", value="channel_delete", description="Массовое удаление текстовых каналов", emoji="<:freeicondelete3625005:1472679616589205604>"),
-            disnake.SelectOption(label="Создание канала", value="channel_create", description="Массовое создание текстовых каналов ", emoji="<:freeiconplus1828819:1472681225935392858>"),
-            disnake.SelectOption(label="Создание вебхука", value="webhook_create", description="Создание интеграции & Вебхука", emoji="<:link:1472654744316018843>"),
-            disnake.SelectOption(label="Отправка от вебхука", value="webhook_send", description="Взаимодействие с URL вебхука", emoji="<:freeiconsending1149588:1472654727257788559>"),
-            disnake.SelectOption(label="Бан участника", value="ban_member", description="Реакция на массовые блокировки участников", emoji="<:ban:1472654052763500584>"),
-            disnake.SelectOption(label="Кик участника", value="kick_member", description="Защита от массовых исключений участников", emoji="<:freeiconblooddrop893529:1472654677735637145>"),
-            disnake.SelectOption(label="Пинг @everyone", value="everyone_ping", description="Ограничение упоминаний роли @everyone", emoji="<:emoji:1472654055343001833>"),
-            disnake.SelectOption(label="Пинг @here", value="here_ping", description="Ограничение упоминаний роли @here", emoji="<:freeiconnotification1827370:1472654716537409537>")
+            disnake.SelectOption(label="Удаление канала", value="channel_delete", description="Массовое удаление текстовых каналов", emoji="<:freeicontrash10654603:1473426946552496211>"),
+            disnake.SelectOption(label="Создание канала", value="channel_create", description="Массовое создание текстовых каналов ", emoji="<:freeiconnew14955170:1473426936125456476>"),
+            disnake.SelectOption(label="Создание вебхука", value="webhook_create", description="Создание интеграции & Вебхука", emoji="<:freeicondrawing14958309:1473426934732947560>"),
+            disnake.SelectOption(label="Отправка от вебхука", value="webhook_send", description="Взаимодействие с URL вебхука", emoji="<:freeiconpaper13958909:1473426933281722544>"),
+            disnake.SelectOption(label="Бан участника", value="ban_member", description="Реакция на массовые блокировки участников", emoji="<:freeicondeletecross9650102:1473426938789101743>"),
+            disnake.SelectOption(label="Кик участника", value="kick_member", description="Защита от массовых исключений участников", emoji="<:freeicondeletecross9650143:1473426941351559390>"),
+            disnake.SelectOption(label="Пинг @everyone", value="everyone_ping", description="Ограничение упоминаний роли @everyone", emoji="<:freeiconremove13921594:1473427367916601415>"),
+            disnake.SelectOption(label="Пинг @here", value="here_ping", description="Ограничение упоминаний роли @here", emoji="<:freeiconbell13921787:1473427366633275553>")
         ]
     )
     async def event_select(self, select: disnake.ui.Select, interaction: disnake.Interaction):
@@ -350,7 +350,7 @@ class ProtectionConfigView(View):
 
 
 
-    @disnake.ui.button(label="Вайтлист", style=ButtonStyle.grey, custom_id="protection_whitelist")
+    @disnake.ui.button(label="Вайтлист", style=ButtonStyle.grey, custom_id="protection_whitelist", emoji="<:freeiconserver12869272:1473431594021949633>")
     async def whitelist_button(self, button: Button, interaction: Interaction):
         if not is_privileged(interaction):
             await interaction.response.send_message("Только владелец или саппорты могут управлять вайтлистом.", ephemeral=True)
@@ -360,7 +360,7 @@ class ProtectionConfigView(View):
         text = "Вайтлист пуст." if not whitelist else "\n".join(f"• <@{uid}> (`{uid}`)" for uid in whitelist[:20])
         if len(whitelist) > 20:
             text += f"\n... и ещё {len(whitelist) - 20}"
-        embed = disnake.Embed(title="Вайтлист защиты", description=text, color=disnake.Color.from_rgb(54, 57, 63))
+        embed = disnake.Embed(title="<:freeiconserver12869272:1473431594021949633> Вайтлист защиты", description=text, color=disnake.Color.from_rgb(54, 57, 63))
         view = WhitelistView(interaction.guild.owner.id)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
@@ -535,11 +535,11 @@ class ActionConfigModal(Modal):
 
         time_text = f"\nВремя изоляции: `{duration_val}` мин." if self.action == "tempban" else ""
         embed = disnake.Embed(
-            title="⚙️ Конфигурация обновлена",
+            title="<:freeiconrefreshdata12388402:1473401657063899289> Конфигурация обновлена",
             description=(
                 f"Событие: **{EVENTS.get(self.event_key)}**\n"
                 f"Наказание: `{ACTION_NAMES.get(self.action)}`\n"
-                f"Лимит действий:  <:freeiconalert8452627:1472654676351778816> `{limit_val}`" + time_text
+                f"Лимит действий:  <:ddd:1473378828427460618> `{limit_val}`" + time_text
             ),
             color=disnake.Color.from_rgb(54, 57, 63)
         )

@@ -1,7 +1,7 @@
 import disnake
 from disnake.ext import commands
 from disnake.ui import Modal, TextInput, View, Button, Select
-from disnake import Interaction, ButtonStyle, Color, Embed, MessageType
+from disnake import Interaction, ButtonStyle, Color, Embed
 import sqlite3
 import json
 import uuid
@@ -27,7 +27,7 @@ try:
     try: from constants import EVENTS_PRIORITY_ROLE_ID
     except: EVENTS_PRIORITY_ROLE_ID = 123456789012345678
     
-    VOD_SUBMIT_CHANNEL_ID = 1472985007403307191 
+     
     
 except ImportError:
     EVENTS_CHANNEL_ID = 0
@@ -44,55 +44,53 @@ DB_PATH = Path("events.db")
 AUX_COLOR = disnake.Color.from_rgb(54, 57, 63)
 
 # ===== КАСТОМНЫЕ ЭМОДЗИ =====
-# Админ-панель (Launcher)
-EMOJI_ROCKET = "🚀"                    # Создать ивент
+# Формат: "<:emoji_name:emoji_id>" или "<a:emoji_name:emoji_id>" для анимированных
+# Получить ID: Discord Dev Portal → Emoji → скопировать ID
 
-# Панель управления ивентом (EventControlView)
-EMOJI_TRASH = "<:freeicongameover3475329:1472678254409285776>"             # Завершить
-EMOJI_PLUS = "<:freeiconplus1828819:1472681225935392858>"              # Внести в основной список
-EMOJI_MINUS = "<:freeiconminus10263924:1472681399512334409>"             # Перевести в резервный список
+# Админ-панель (MainAdminView)
+EMOJI_DICE = "<:freeiconrocket6699887:1473360986265227325>"              # Начать регистрацию
+EMOJI_TRASH = "<:freeiconmeteorite6699854:1473360985216782509>"             # Завершить и очистить
+EMOJI_PLUS = "<:freeiconplus1828819:1473433100737319114>"              # Внести в основной список
+EMOJI_MINUS = "<:freeiconminus10263924:1473440518536171746>"             # Перевести в резервный список
 EMOJI_MIC = "🎙️"              # Проверка голосового канала
-EMOJI_CHAT = "💬"              # Тегнуть основной список
-EMOJI_MEGAPHONE = "<:freeiconmegaphone716224:1472678446454014046>"         # Пингануть everyone
-EMOJI_GEAR = "<:freeicongear889744:1472678585277092084>"              # Меню управления
+EMOJI_CHAT = "<:__:1473379222432256083>"              # Тегнуть основной список
+EMOJI_MEGAPHONE = "<:freeiconmegaphone716224:1473440844806619136>"         # Пингануть everyone
+EMOJI_GEAR = "<:freeicondocuments1548205:1473390852234543246>"              # Меню управления
 
-# Публичная панель
-EMOJI_JOIN = "<:freeiconplus1828819:1472681225935392858>"              # Записаться
-EMOJI_LEAVE = "<:freeiconminus10263924:1472681399512334409>"             # Покинуть список
+# Публичная панель (EventUserView)
+EMOJI_JOIN = "<:freeiconplus1828819:1473433100737319114>"              # Записаться
+EMOJI_LEAVE = "<:freeiconminus10263924:1473440518536171746>"             # Покинуть список
 
-# Меню управления (OtherOptionsView)
-EMOJI_STAR = "<:freeiconstar7408613:1472654730902765678>"              # White List
-EMOJI_INBOX = "<:freeiconfile3286303:1472678951599083603>"             # WL → Основа
-EMOJI_PLUS_CIRCLE = "<:freeiconplus1828819:1472681225935392858>"       # Внести в резерв
-EMOJI_SETTINGS = "<:freeiconedit1040228:1472654696891158549>"          # Редактировать Embed
-EMOJI_PAUSE = "<:freeiconstop394592:1472679253177925808>"             # Пауза
-EMOJI_RESUME = "<:freeiconpowerbutton4943421:1472679504714666056>"            # Старт
-EMOJI_DOOR = "<:freeiconbroom2954880:1472654679128145981>"              # Кик
-EMOJI_CAMERA = "<:freeiconyoutube1384060:1472661242941411458>"            # Запрос откатов
+# Меню управления (OtherOptionsView) - Select Options
+EMOJI_STAR = "<:ddd:1473378828427460618>"              # White List
+EMOJI_INBOX = "<:add:1473387233372541102>"             # WL → Основа
+EMOJI_PLUS_CIRCLE = "<:freeiconplus1828819:1473433100737319114>"       # Внести в резерв
+EMOJI_SETTINGS = "<:freeicondrawing14958309:1473426934732947560>"          # Редактировать Embed
+EMOJI_PAUSE = "<:freeiconstop394592:1473441364938194976>"             # Пауза
+EMOJI_RESUME = "<:freeiconpowerbutton4943421:1473441364170772674>"            # Старт
+EMOJI_DOOR = "<:freeicongrimreaper7515728:1473373897855340617>"              # Кик
+EMOJI_CAMERA = "<:teg:1473384504537383157>"            # Запрос откатов
 
-# Кнопки внутри меню
-EMOJI_PLUS_BTN = "<:freeiconplus1828819:1472681225935392858>"          # Добавить ID
-EMOJI_MINUS_BTN = "<:freeiconminus10263924:1472681399512334409>"         # Удалить ID
-EMOJI_EYE = "<:freeiconeye8050820:1472679869992407257>"              # Показать WL
-EMOJI_BIN = "<:freeicondelete1214428:1472680867284385854>"              # Очистить WL
-EMOJI_CHECK = "<:tik:1472654073814581268>"             # Выполнить
-EMOJI_PENCIL = "<:freeiconedit1040228:1472654696891158549>"            # Редактировать
-EMOJI_PLAY = "<:freeiconpowerbutton4943421:1472679504714666056>"              # Возобновить
-EMOJI_PAUSE_BTN = "<:freeiconstop394592:1472679253177925808>"         # Остановить
-EMOJI_DOOR_BTN = "<:freeiconbroom2954880:1472654679128145981>"          # Удалить
-EMOJI_CAMERA_BTN = "<:freeiconyoutube1384060:1472661242941411458>"        # Отправить запрос
-EMOJI_CROSS = "<:cross:1472654174788255996>"             # Закрыть
+# Меню управления - кнопки внутри (динамические View)
+EMOJI_PLUS_BTN = "<:freeiconplus1828819:1472681225935392858>"          # Добавить ID (WL)
+EMOJI_MINUS_BTN = "<:freeiconminus10263924:1473440518536171746>"         # Удалить ID (WL)
+EMOJI_EYE = "<:freeiconrecruiter7250697:1473386162566598756>"              # Показать WL
+EMOJI_BIN = "<:freeicontrash10654603:1473426946552496211>"              # Очистить весь WL
+EMOJI_CHECK = "<:freeiconswitcharrows9282594:1473359651318792282>"             # Выполнить (WL Mass Add)
+EMOJI_PENCIL = "<:freeicondrawing14958309:1473426934732947560>"            # Редактировать (Edit)
+EMOJI_PLAY = "<:freeiconpowerbutton4943421:1473441364170772674>"              # Возобновить регистрацию (Resume)
+EMOJI_PAUSE_BTN = "<:freeiconstop394592:1473441364938194976>"         # Остановить регистрацию (Pause)
+EMOJI_DOOR_BTN = "<:freeicongrimreaper7515728:1473373897855340617>"          # Удалить участника (Kick)
+EMOJI_CAMERA_BTN = "<:teg:1473384504537383157>"        # Отправить запрос (VODs)
 
-# Реакции для Thread Mode
-REACTION_ACCEPT = "✅"
-REACTION_RESERVE = "🐘" # Слон
+# Закрыть меню
+EMOJI_CROSS = "<:cross:1473380950770716836>"             # Закрыть
 
 # --- РАБОТА С БАЗОЙ ДАННЫХ ---
 
 def init_events_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Добавлены поля type и thread_id
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS events (
             id TEXT PRIMARY KEY,
@@ -107,19 +105,10 @@ def init_events_db():
             admin_message_id INTEGER,
             channel_id INTEGER,
             participants TEXT,
-            type TEXT DEFAULT 'button',
-            thread_id INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS global_whitelist (user_id INTEGER PRIMARY KEY)''')
-    
-    # Миграция старых баз (на случай если таблица уже есть без новых колонок)
-    try: cursor.execute("ALTER TABLE events ADD COLUMN type TEXT DEFAULT 'button'")
-    except: pass
-    try: cursor.execute("ALTER TABLE events ADD COLUMN thread_id INTEGER DEFAULT 0")
-    except: pass
-    
     conn.commit()
     conn.close()
 
@@ -159,6 +148,16 @@ def clear_global_whitelist():
     conn.commit()
     conn.close()
 
+def get_current_event():
+    init_events_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM events WHERE status IN ("active", "draft", "paused") ORDER BY created_at DESC LIMIT 1')
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
 def get_event_by_id(event_id):
     init_events_db()
     conn = sqlite3.connect(DB_PATH)
@@ -169,17 +168,6 @@ def get_event_by_id(event_id):
     conn.close()
     return dict(row) if row else None
 
-def get_active_events():
-    """Возвращает все активные ивенты."""
-    init_events_db()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM events WHERE status IN ("active", "draft", "paused")')
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
-
 def save_event(data):
     init_events_db()
     conn = sqlite3.connect(DB_PATH)
@@ -188,14 +176,21 @@ def save_event(data):
     parts_json = json.dumps(parts_data) if not isinstance(parts_data, str) else parts_data
     cursor.execute('''
         INSERT OR REPLACE INTO events 
-        (id, name, organizer, event_time, description, image_url, max_slots, status, message_id, admin_message_id, channel_id, participants, type, thread_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, organizer, event_time, description, image_url, max_slots, status, message_id, admin_message_id, channel_id, participants)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data["id"], data["name"], data["organizer"], data["event_time"], 
         data["description"], data.get("image_url"), data["max_slots"], 
         data["status"], data.get("message_id"), data.get("admin_message_id"), 
-        data.get("channel_id"), parts_json, data.get("type", "button"), data.get("thread_id", 0)
+        data.get("channel_id"), parts_json
     ))
+    conn.commit()
+    conn.close()
+
+def close_all_active_events():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE events SET status = "closed" WHERE status IN ("active", "draft", "paused")')
     conn.commit()
     conn.close()
 
@@ -243,11 +238,11 @@ async def send_log(bot, channel_id, title, description, color=0x2B2D31, user=Non
     except: pass
 
 async def log_admin_action(bot, action_name, details, user):
-    await send_log(bot, LOG_ADMIN_ACTIONS_ID, f"<:freeicontoolbox4873901:1472933974094647449> Админ-действие: {action_name}", details, disnake.Color.from_rgb(54, 57, 63), user)
+    await send_log(bot, LOG_ADMIN_ACTIONS_ID, f"<:freeiconboss265674:1473388753111220357> Админ-действие: {action_name}", details, disnake.Color.from_rgb(54, 57, 63), user)
 
 async def log_user_action(bot, action_name, details, user, is_negative=False):
     col = Color.red() if is_negative else Color.green()
-    await send_log(bot, LOG_USER_ACTIONS_ID, f"<:freeiconteam2763403:1472654736489451581> Участники: {action_name}", details, col, user)
+    await send_log(bot, LOG_USER_ACTIONS_ID, f"<:freeiconpeopletogether4596136:1473433825680953442> Участники: {action_name}", details, col, user)
 
 async def log_event_history(bot, event_data):
     """Отправляет финальный отчет о закрытом ивенте."""
@@ -259,8 +254,8 @@ async def log_event_history(bot, event_data):
     main_txt = "\n".join([f"{i+1}. <@{p['user_id']}>" for i, p in enumerate(struct['main'])]) or "Пусто"
     res_txt = "\n".join([f"{i+1}. <@{p['user_id']}>" for i, p in enumerate(struct['reserve'])]) or "Пусто"
     
-    embed = Embed(title=f"<:freeiconstop394592:1472679253177925808> Ивент завершен: {event_data['name']}", color=0x2B2D31, timestamp=datetime.now())
-    embed.add_field(name="Инфо", value=f"Орг: {event_data['organizer']}\nВремя: {event_data['event_time']}\nТип: {event_data.get('type', 'button')}", inline=False)
+    embed = Embed(title=f"<:cross:1473380950770716836> Ивент завершен: {event_data['name']}", color=0x2B2D31, timestamp=datetime.now())
+    embed.add_field(name="Инфо", value=f"Орг: {event_data['organizer']}\nВремя: {event_data['event_time']}", inline=False)
     
     if len(main_txt) > 1000: main_txt = main_txt[:950] + "\n..."
     if len(res_txt) > 1000: res_txt = res_txt[:950] + "\n..."
@@ -273,16 +268,20 @@ async def log_event_history(bot, event_data):
 
 # --- ГЕНЕРАЦИЯ ЭМБЕДОВ ---
 
-def generate_admin_embeds(data=None, bot=None):
+def generate_admin_embeds(data=None, bot=None): # <-- Добавлен bot
     """Возвращает СПИСОК с одним эмбедом, содержащим и основу, и резерв"""
     
     embed = Embed(color=0x2B2D31)
+    
+    # Пытаемся получить иконку бота, если передан bot
     icon_url = None
-    if bot: icon_url = bot.user.display_avatar.url
+    if bot:
+        icon_url = bot.user.display_avatar.url
     
     if not data:
-        embed.description = "**Панель создания мероприятий**\nНажмите кнопку ниже, чтобы создать новый ивент."
-        if icon_url: embed.set_footer(text="Calogero Famq", icon_url=icon_url)
+        embed.description = "**Регистрация:** не активна"
+        if icon_url: embed.set_footer(text="Absolute Famq", icon_url=icon_url) # <-- Используем тут
+        else: embed.set_footer(text="Absolute Famq")
         return [embed]
 
     struct = get_participants_struct(data)
@@ -290,16 +289,13 @@ def generate_admin_embeds(data=None, bot=None):
     reserve_list = struct["reserve"]
     max_slots = data["max_slots"]
     
-    if data["status"] == "paused": status_text = "ПАУЗА <:freeiconstop394592:1472679253177925808>"
+    if data["status"] == "paused": status_text = "ПАУЗА <:freeiconstop394592:1473441364938194976>"
     elif data["status"] == "draft": status_text = "приостановлена"
-    else: status_text = "доступна <:tik:1472654073814581268> "
-    
-    event_type_str = "Ветка (Thread)" if data.get("type") == "thread" else "Кнопки (Button)"
+    else: status_text = "доступна <:tick:1473380953245221016> "
     
     desc_text = (
         f"**Мероприятие:** {data['name']}\n"
-        f"**Регистрация:** {status_text}\n"
-        f"**Тип:** {event_type_str}\n\n"
+        f"**Регистрация:** {status_text}\n\n"
         f"> **Время:** {data['event_time']}\n"
         f"> **Примечание:** {data['description']}\n"
     )
@@ -325,7 +321,7 @@ def generate_admin_embeds(data=None, bot=None):
                 break
             embed.add_field(name="⠀", value="\n".join(chunk), inline=True)
 
-    # ЗАГОЛОВОК РЕЗЕРВА
+    # ЗАГОЛОВОК РЕЗЕРВА (сразу после основы, без разрыва)
     embed.add_field(
         name="⠀",
         value=f"**Резервный список ({len(reserve_list)}):**",
@@ -348,55 +344,73 @@ def generate_admin_embeds(data=None, bot=None):
     if data.get("image_url"):
         embed.set_image(url=data["image_url"])
     
-    if icon_url: embed.set_footer(text=f"ID: {data['id']} • Calogero Famq", icon_url=icon_url)
-    else: embed.set_footer(text=f"ID: {data['id']} • Calogero Famq")
+    # Установка футера
+    if icon_url:
+        embed.set_footer(text="Absolute Famq", icon_url=icon_url)
+    else:
+        embed.set_footer(text="Absolute Famq") # Без иконки, если bot не передан
 
     return [embed]
 
-async def update_event_display(bot, event_id):
-    """Обновляет сообщения конкретного ивента (админка и паблик)."""
-    data = get_event_by_id(event_id)
-    if not data: return
-    
-    embeds = generate_admin_embeds(data, bot=bot)
-    
-    # 1. Обновляем админ-панель (персональную для этого ивента)
-    admin_chan = bot.get_channel(EVENTS_ADMIN_CHANNEL_ID)
-    if admin_chan and data.get("admin_message_id"):
-        try:
-            msg = await admin_chan.fetch_message(data["admin_message_id"])
-            await msg.edit(embeds=embeds, view=EventControlView(event_id))
-        except: pass
 
-    # 2. Обновляем публичный эмбед
-    if data.get("message_id"):
+async def update_all_views(bot, data=None):
+    """Обновляет сообщения админки и публичного канала."""
+    embeds = generate_admin_embeds(data)
+    
+    # Админ-канал
+    admin_chan = bot.get_channel(EVENTS_ADMIN_CHANNEL_ID)
+    if admin_chan:
+        target_msg = None
+        try:
+            async for msg in admin_chan.history(limit=10):
+                if msg.author == bot.user and msg.components:
+                    try:
+                        if msg.components[0].children and msg.components[0].children[0].custom_id == "start_reg_btn":
+                            target_msg = msg
+                            break
+                    except (IndexError, AttributeError): pass
+        except Exception:
+            pass
+        
+        if target_msg:
+            try:
+                await target_msg.edit(embeds=embeds, view=MainAdminView())
+            except Exception:
+                pass
+        else:
+            try:
+                await admin_chan.send(embeds=embeds, view=MainAdminView())
+            except Exception:
+                pass
+
+    # Публичный канал
+    if data and data.get("message_id"):
         try:
             chan = bot.get_channel(data["channel_id"])
             if chan:
                 msg = await chan.fetch_message(data["message_id"])
-                # Если тип Thread - кнопок нет (или только выход), если Button - кнопки есть
-                view = EventUserView(event_id) if data.get("type") == "button" else None
-                await msg.edit(embeds=embeds, view=view)
-        except: pass
+                await msg.edit(embeds=embeds, view=EventUserView(data["id"]))
+        except Exception:
+            pass
 
-# --- МОДАЛЬНЫЕ ОКНА И ДИАЛОГИ ---
+# --- МОДАЛЬНЫЕ ОКНА ---
 
 class EventCreateModal(Modal):
-    def __init__(self, event_type):
-        self.event_type = event_type
+    def __init__(self):
         components = [
             TextInput(label="Название мероприятия", custom_id="name", placeholder="Капт", required=True),
             TextInput(label="Организатор", custom_id="organizer", placeholder="Alexis", required=True),
             TextInput(label="Время", custom_id="time", placeholder="19:00", required=True),
-            TextInput(label="Слоты (число)", custom_id="slots", placeholder="20", value="20", required=True),
+            TextInput(label="Слоты (число)", custom_id="slots", placeholder="35", required=True),
             TextInput(label="Ссылка на скриншот (необяз.)", custom_id="image", required=False),
         ]
-        super().__init__(title="Создание ивента", components=components)
+        super().__init__(title="Настройка мероприятия", components=components)
 
     async def callback(self, interaction: Interaction):
         try: slots = int(interaction.text_values["slots"])
         except: return await interaction.response.send_message("Слоты должны быть числом.", ephemeral=True)
         
+        close_all_active_events()
         event_id = str(uuid.uuid4())[:8]
         struct = {"main": [], "reserve": []}
         
@@ -410,41 +424,20 @@ class EventCreateModal(Modal):
             "max_slots": slots,
             "status": "active",
             "participants": struct,
-            "channel_id": EVENTS_CHANNEL_ID,
-            "type": self.event_type,
-            "thread_id": 0
+            "channel_id": EVENTS_CHANNEL_ID
         }
         
         pub_chan = interaction.guild.get_channel(EVENTS_CHANNEL_ID)
-        admin_chan = interaction.guild.get_channel(EVENTS_ADMIN_CHANNEL_ID)
+        if not pub_chan: return await interaction.response.send_message("Нет публичного канала.", ephemeral=True)
         
-        if not pub_chan or not admin_chan: 
-            return await interaction.response.send_message("Ошибка: каналы не настроены.", ephemeral=True)
-        
-        # 1. Публичное сообщение
-        embeds = generate_admin_embeds(new_event, bot=interaction.bot)
-        # Если тип Button - ставим кнопки, если Thread - нет
-        view = EventUserView(event_id) if self.event_type == "button" else None
-        pub_msg = await pub_chan.send(embeds=embeds, view=view)
+        embeds = generate_admin_embeds(new_event)
+        pub_msg = await pub_chan.send(embeds=embeds, view=EventUserView(event_id))
         new_event["message_id"] = pub_msg.id
         
-        # 2. Логика для Ветки
-        if self.event_type == "thread":
-            thread = await pub_msg.create_thread(name=f"{new_event['name']} ({new_event['event_time']})", auto_archive_duration=1440)
-            new_event["thread_id"] = thread.id
-            await thread.send(
-                f"**Регистрация открыта!**\n"
-                f"Отправьте сообщение `+` в этот чат, чтобы записаться.\n"
-                f"Администратор подтвердит ваше участие реакцией {REACTION_ACCEPT} (Основа) или {REACTION_RESERVE} (Резерв)."
-            )
-
-        # 3. Админское сообщение (Control Panel)
-        admin_msg = await admin_chan.send(embeds=embeds, view=EventControlView(event_id))
-        new_event["admin_message_id"] = admin_msg.id
-        
         save_event(new_event)
-        await log_admin_action(interaction.bot, "Старт ивента", f"Имя: **{new_event['name']}** | Тип: {self.event_type}", interaction.user)
-        await interaction.response.send_message(f"Ивент **{new_event['name']}** создан!", ephemeral=True)
+        await update_all_views(interaction.bot, new_event)
+        await log_admin_action(interaction.bot, "Старт регистрации", f"Ивент: **{new_event['name']}**", interaction.user)
+        await interaction.response.send_message("Регистрация запущена!", ephemeral=True)
 
 class SmartManageModal(Modal):
     def __init__(self, mode, event_id, menu_msg=None):
@@ -480,13 +473,15 @@ class SmartManageModal(Modal):
         struct = get_participants_struct(data)
         inp = interaction.text_values["input"]
 
-        # === WL ADD/REMOVE ===
+        # === WL ADD ===
         if self.mode == "whitelist_add":
             ids = extract_ids(inp)
             add_to_global_whitelist(ids)
             await log_admin_action(interaction.bot, "Добавлено в WL", f"ID: {ids}", interaction.user)
             await interaction.response.send_message(f"Добавлено в Global WL: **{len(ids)} чел.**", ephemeral=True)
             return
+
+        # === WL REMOVE ===
         if self.mode == "whitelist_remove":
             ids = extract_ids(inp)
             remove_from_global_whitelist(ids)
@@ -504,7 +499,7 @@ class SmartManageModal(Modal):
                     added += 1
             data["participants"] = struct
             save_event(data)
-            await update_event_display(interaction.bot, self.event_id)
+            await update_all_views(interaction.bot, data)
             await log_admin_action(interaction.bot, "Ручной ввод (Резерв)", f"Добавлено: **{added}**", interaction.user)
             await interaction.response.send_message(f"Добавлено в резерв: **{added} чел.**", ephemeral=True)
             return
@@ -521,7 +516,7 @@ class SmartManageModal(Modal):
                 removed = lst.pop(idx)
                 data["participants"] = struct
                 save_event(data)
-                await update_event_display(interaction.bot, self.event_id)
+                await update_all_views(interaction.bot, data)
                 await log_admin_action(interaction.bot, "Кик участника", f"User: <@{removed['user_id']}>", interaction.user)
                 await interaction.response.send_message(f"Кикнут <@{removed['user_id']}>.", ephemeral=True)
             else:
@@ -543,10 +538,10 @@ class SmartManageModal(Modal):
             struct = push_to_reserve_if_full(struct, data["max_slots"])
             data["participants"] = struct
             save_event(data)
-            await update_event_display(interaction.bot, self.event_id)
+            await update_all_views(interaction.bot, data)
             await log_admin_action(interaction.bot, "Перенос Резерв→Основа", f"Кол-во: **{len(moved)}**", interaction.user)
             await interaction.response.send_message(f"Перемещено: **{len(moved)} чел.**", ephemeral=True)
-        
+
         elif self.mode == "main_to_reserve":
             moved = []
             valid = [i-1 for i in indices if 0 < i <= len(struct["main"])]
@@ -557,7 +552,7 @@ class SmartManageModal(Modal):
                 struct["reserve"].insert(0, u)
             data["participants"] = struct
             save_event(data)
-            await update_event_display(interaction.bot, self.event_id)
+            await update_all_views(interaction.bot, data)
             await log_admin_action(interaction.bot, "Перенос Основа→Резерв", f"Кол-во: **{len(moved)}**", interaction.user)
             await interaction.response.send_message(f"Перемещено: **{len(moved)} чел.**", ephemeral=True)
 
@@ -584,136 +579,26 @@ class EditEventModal(Modal):
         data["description"] = interaction.text_values["desc"]
         data["image_url"] = interaction.text_values["image"]
         save_event(data)
-        await update_event_display(interaction.bot, self.event_id)
+        await update_all_views(interaction.bot, data)
         await log_admin_action(interaction.bot, "Редактирование", "Параметры ивента обновлены", interaction.user)
         await interaction.response.send_message("Ивент обновлен.", ephemeral=True)
 
-# --- VIEWS (КНОПКИ) ---
-
-class EventLauncherView(View):
-    """Главная панель запуска (статичная)."""
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @disnake.ui.button(label="Создать ивент", style=ButtonStyle.success, emoji=EMOJI_ROCKET, custom_id="launcher_create")
-    async def create(self, button, interaction):
-        # Выбор типа ивента через View с Select или просто через View с двумя кнопками
-        # Используем View с кнопками для простоты
-        view = View(timeout=60)
-        
-        btn_btn = Button(label="Кнопки (Button)", style=ButtonStyle.primary, emoji="🔘")
-        btn_btn.callback = lambda i: i.response.send_modal(EventCreateModal("button"))
-        
-        btn_th = Button(label="Ветка (Thread)", style=ButtonStyle.secondary, emoji="#️⃣")
-        btn_th.callback = lambda i: i.response.send_modal(EventCreateModal("thread"))
-        
-        view.add_item(btn_btn)
-        view.add_item(btn_th)
-        
-        await interaction.response.send_message("Выберите тип мероприятия:", view=view, ephemeral=True)
-
-class EventControlView(View):
-    """Панель управления КОНКРЕТНЫМ ивентом."""
-    def __init__(self, event_id):
-        super().__init__(timeout=None)
-        self.event_id = event_id
-
-    @disnake.ui.button(label="Завершить", style=ButtonStyle.danger, emoji=EMOJI_TRASH, row=0, custom_id="close_evt_btn")
-    async def close_evt(self, button, interaction):
-        data = get_event_by_id(self.event_id)
-        if not data: return await interaction.response.send_message("Ивент не найден.", ephemeral=True)
-        
-        # Удаляем публичный пост
-        try:
-            chan = interaction.guild.get_channel(data["channel_id"])
-            msg = await chan.fetch_message(data["message_id"])
-            await msg.delete() 
-        except: pass
-        
-        # Если есть ветка - удаляем или архивируем? Удаляем.
-        if data.get("thread_id"):
-            try:
-                thread = interaction.guild.get_thread(data["thread_id"])
-                if thread: await thread.delete()
-            except: pass
-
-        # Удаляем админский пост
-        try:
-            await interaction.message.delete()
-        except: pass
-        
-        data["status"] = "closed"
-        save_event(data) # Маркируем как закрытый
-        
-        await log_event_history(interaction.bot, data)
-        await log_admin_action(interaction.bot, "Ивент завершен", f"Имя: **{data['name']}**", interaction.user)
-        await interaction.response.send_message("Ивент завершен.", ephemeral=True)
-
-    @disnake.ui.button(label="В Основу", style=ButtonStyle.secondary, emoji=EMOJI_PLUS, row=1, custom_id="add_main_btn")
-    async def add_to_main(self, button, interaction):
-        await interaction.response.send_modal(SmartManageModal("reserve_to_main", self.event_id))
-
-    @disnake.ui.button(label="В Резерв", style=ButtonStyle.secondary, emoji=EMOJI_MINUS, row=1, custom_id="to_res_btn")
-    async def move_to_res(self, button, interaction):
-        await interaction.response.send_modal(SmartManageModal("main_to_reserve", self.event_id))
-
-    @disnake.ui.button(label="Войс чек", style=ButtonStyle.secondary, emoji=EMOJI_MIC, row=2, custom_id="chk_voice_btn")
-    async def check_voice(self, button, interaction):
-        data = get_event_by_id(self.event_id)
-        if not data: return
-        voice = interaction.guild.get_channel(EVENT_VOICE_CHANNEL_ID)
-        if not voice: return await interaction.response.send_message(f"Канал {EVENT_VOICE_CHANNEL_ID} не найден.", ephemeral=True)
-        
-        struct = get_participants_struct(data)
-        voice_members = {m.id for m in voice.members}
-        missing = [p["user_id"] for p in struct["main"] if p["user_id"] not in voice_members]
-        
-        if missing:
-            txt = "\n".join([f"<@{uid}>" for uid in missing])
-            await interaction.response.send_message(f"**Отсутствуют в войсе:**\n{txt}", ephemeral=True)
-        else:
-            await interaction.response.send_message("Все участники основы в войсе!", ephemeral=True)
-
-    @disnake.ui.button(label="Тегнуть основу", style=ButtonStyle.secondary, emoji=EMOJI_CHAT, row=2, custom_id="tag_main_btn")
-    async def tag_main(self, button, interaction):
-        data = get_event_by_id(self.event_id)
-        if not data: return
-        struct = get_participants_struct(data)
-        if not struct["main"]: return await interaction.response.send_message("Основа пуста.", ephemeral=True)
-        msg = f"**Внимание, основной состав!** {' '.join([f'<@{p['user_id']}>' for p in struct['main']])}"
-        chan = interaction.guild.get_channel(data["channel_id"])
-        await chan.send(msg)
-        await interaction.response.send_message("Тег отправлен.", ephemeral=True)
-
-    @disnake.ui.button(label="Пинг all", style=ButtonStyle.secondary, emoji=EMOJI_MEGAPHONE, row=3, custom_id="ping_ev_btn")
-    async def ping_everyone(self, button, interaction):
-        data = get_event_by_id(self.event_id)
-        if not data: return
-        
-        embed = Embed(color=AUX_COLOR)
-        channel_mention = f"<#{data['channel_id']}>"
-        embed.description = f"Регистрация открыта: {channel_mention}\nВремя: **{data['event_time']}**"
-        target = interaction.guild.get_channel(EVENTS_TAG_CHANNEL_ID) or interaction.guild.get_channel(data["channel_id"])
-        await target.send(content=f"@everyone **{data['name']}**", embed=embed)
-        await interaction.response.send_message("Анонс отправлен.", ephemeral=True)
-
-    @disnake.ui.button(label="Меню", style=ButtonStyle.primary, emoji=EMOJI_GEAR, row=3, custom_id="other_btn")
-    async def other(self, button, interaction):
-        await interaction.response.send_message(embed=Embed(title="Меню управления", color=AUX_COLOR), view=OtherOptionsView(self.event_id), ephemeral=False)
+# --- VIEWS ---
 
 class OtherOptionsView(View):
     def __init__(self, event_id):
         super().__init__(timeout=None)
         self.event_id = event_id
+        
         options = [
-            disnake.SelectOption(label="White List", emoji=EMOJI_STAR, value="whitelist"),
-            disnake.SelectOption(label="WL → Основа", emoji=EMOJI_INBOX, value="wl_mass_add"),
-            disnake.SelectOption(label="Внести в резерв", emoji=EMOJI_PLUS_CIRCLE, value="add_reserve"),
-            disnake.SelectOption(label="Редактировать", emoji=EMOJI_SETTINGS, value="edit"),
-            disnake.SelectOption(label="Пауза", emoji=EMOJI_PAUSE, value="pause"),
-            disnake.SelectOption(label="Старт", emoji=EMOJI_RESUME, value="resume"),
-            disnake.SelectOption(label="Кик", emoji=EMOJI_DOOR, value="kick"),
-            disnake.SelectOption(label="Запрос откатов", emoji=EMOJI_CAMERA, value="vods"),
+            disnake.SelectOption(label="White List", description="Управление списком приоритета", emoji=EMOJI_STAR, value="whitelist"),
+            disnake.SelectOption(label="WL → Основа", description="Массовый перенос всех из WL в основу", emoji=EMOJI_INBOX, value="wl_mass_add"),
+            disnake.SelectOption(label="Внести в резерв", description="Ручной ввод ID участников", emoji=EMOJI_PLUS_CIRCLE, value="add_reserve"),
+            disnake.SelectOption(label="Редактировать Embed", description="Изменить название, время, описание, картинку", emoji=EMOJI_SETTINGS, value="edit"),
+            disnake.SelectOption(label="Пауза", description="Остановить регистрацию (временно)", emoji=EMOJI_PAUSE, value="pause"),
+            disnake.SelectOption(label="Старт", description="Возобновить регистрацию", emoji=EMOJI_RESUME, value="resume"),
+            disnake.SelectOption(label="Кик", description="Удалить участника по номеру", emoji=EMOJI_DOOR, value="kick"),
+            disnake.SelectOption(label="Запрос откатов", description="Пингануть участников для отправки отката", emoji=EMOJI_CAMERA, value="vods"),
         ]
         self.add_item(Select(placeholder="Меню управления", options=options, custom_id="other_select"))
 
@@ -723,32 +608,197 @@ class OtherOptionsView(View):
 
     async def interaction_check(self, interaction: Interaction):
         if interaction.data.get("component_type") == 2: return True 
+        
         val = interaction.data['values'][0]
         data = get_event_by_id(self.event_id)
         if not data: return await interaction.response.send_message("Ивент не найден.", ephemeral=True)
         
-        # Логика меню (сокращено, аналогично оригиналу, но с привязкой к self.event_id)
+        # === WHITE LIST ===
         if val == "whitelist":
-            # ... (логика WL такая же)
-            await interaction.response.send_modal(SmartManageModal("whitelist_add", self.event_id)) # Пример
+            embed = Embed(title="<:freeiconinvitation7515655:1473373288724959285> White List Управление", color=AUX_COLOR)
+            wl = get_global_whitelist()
+            desc_list = " ".join([f"<@{uid}>" for uid in wl]) if wl else "*Пусто*"
+            embed.description = f"**Текущий список:**\n{desc_list}\n\n*White List — участники с приоритетом попадают в основу вне очереди.*"
+            
+            view = View()
+            
+            btn_add = Button(label="Добавить ID", style=ButtonStyle.success, emoji=EMOJI_PLUS_BTN)
+            btn_add.callback = lambda i: i.response.send_modal(SmartManageModal("whitelist_add", self.event_id, interaction.message))
+            
+            btn_rem = Button(label="Удалить ID", style=ButtonStyle.danger, emoji=EMOJI_MINUS_BTN)
+            btn_rem.callback = lambda i: i.response.send_modal(SmartManageModal("whitelist_remove", self.event_id, interaction.message))
+            
+            btn_show = Button(label="Показать WL", style=ButtonStyle.primary, emoji=EMOJI_EYE)
+            async def show_cb(inter):
+                wl_current = get_global_whitelist()
+                txt = "\n".join([f"<@{uid}>" for uid in wl_current]) if wl_current else "*Пусто*"
+                await inter.response.send_message(f"**<:freeiconsermon7515746:1473373077818573012> Global White List:**\n{txt}", ephemeral=True)
+            btn_show.callback = show_cb
+            
+            btn_clear = Button(label="Очистить весь WL", style=ButtonStyle.danger, emoji=EMOJI_BIN)
+            async def clear_cb(inter):
+                clear_global_whitelist()
+                await log_admin_action(inter.bot, "Очистка WL", "Весь список удален", inter.user)
+                await inter.response.send_message("Global White List очищен.", ephemeral=True)
+            btn_clear.callback = clear_cb
+            
+            view.add_item(btn_add)
+            view.add_item(btn_rem)
+            view.add_item(btn_show)
+            view.add_item(btn_clear)
+            
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+        # === WL MASS ADD ===
         elif val == "wl_mass_add":
-            # Реализация WL Mass Add (упрощенно)
-            # ...
-            pass
+            embed = Embed(title="<:freeiconswitcharrows9282594:1473359651318792282> Массовое добавление WL", color=AUX_COLOR)
+            embed.description = (
+                "**White List → Основной список**\n\n"
+                "Все участники из Global WL будут автоматически добавлены в основу (если еще не записаны).\n"
+                "При переполнении лишние уйдут в резерв."
+            )
+            
+            view = View()
+            btn_do = Button(label="Выполнить", style=ButtonStyle.primary, emoji=EMOJI_CHECK)
+            
+            async def mass_add_cb(inter):
+                wl = get_global_whitelist()
+                if not wl: return await inter.response.send_message("WL пуст.", ephemeral=True)
+                
+                struct = get_participants_struct(data)
+                existing_ids = {p["user_id"] for p in struct["main"] + struct["reserve"]}
+                added_users = []
+                
+                for uid in wl:
+                    if uid not in existing_ids:
+                        added_users.append({"user_id": uid, "join_time": time.time()})
+                
+                struct["main"] = added_users + struct["main"]
+                struct = push_to_reserve_if_full(struct, data["max_slots"])
+                
+                data["participants"] = struct
+                save_event(data)
+                await update_all_views(inter.bot, data)
+                await log_admin_action(inter.bot, "Массовый WL", f"Добавлено: **{len(added_users)}**", inter.user)
+                await inter.response.send_message(f"WL → Основа: **{len(added_users)} чел.**", ephemeral=True)
+            
+            btn_do.callback = mass_add_cb
+            view.add_item(btn_do)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+        # === ADD RESERVE ===
         elif val == "add_reserve":
-            await interaction.response.send_modal(SmartManageModal("manual_reserve_add", self.event_id, interaction.message))
+            embed = Embed(title="<:freeiconplus1828819:1473433100737319114> Внести в резервный список", color=AUX_COLOR)
+            embed.description = (
+                "Укажите ID участников или теги, которых нужно внести в резерв вручную.\n"
+                "Пример: `@User 123456789 987654321`"
+            )
+            view = View()
+            btn = Button(label="Внести ID", style=ButtonStyle.success, emoji=EMOJI_PLUS_BTN)
+            btn.callback = lambda i: i.response.send_modal(SmartManageModal("manual_reserve_add", self.event_id, interaction.message))
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
         elif val == "edit":
-            await interaction.response.send_modal(EditEventModal(data, interaction.message))
+            embed = Embed(
+                title="<:fsdf:1473443687013810176> Редактирование", 
+                color=AUX_COLOR
+            )
+            embed.description = (
+                "Изменить название, время, примечание, картинку.\n"
+                "Откроется форма редактирования."
+            )
+            
+            view = View(timeout=300)
+            btn = Button(
+                label="Редактировать", 
+                style=ButtonStyle.secondary, 
+                emoji="<:freeiconedit1040228:1472654696891158549>"
+            )
+            
+            btn.callback = lambda i: asyncio.create_task(i.response.send_modal(EditEventModal(data, interaction.message)))
+            
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
+        # === PAUSE ===
+        elif val == "pause":
+            embed = Embed(title="<:freeiconstop394592:1473441364938194976> Пауза", color=AUX_COLOR)
+            embed.description = "Регистрация будет приостановлена. Участники не смогут записываться."
+            view = View()
+            btn = Button(label="Остановить регистрацию", style=ButtonStyle.danger, emoji=EMOJI_PAUSE_BTN)
+            async def do_pause(inter):
+                data["status"] = "paused"
+                save_event(data)
+                await update_all_views(inter.bot, data)
+                await log_admin_action(inter.bot, "Пауза", "Регистрация остановлена", inter.user)
+                await inter.response.send_message("<:freeiconstop394592:1473441364938194976> Регистрация ПРИОСТАНОВЛЕНА.", ephemeral=True)
+            btn.callback = do_pause
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+        # === RESUME ===
+        elif val == "resume":
+            embed = Embed(title="<:freeiconpowerbutton4943421:1473441364170772674> Возобновить", color=AUX_COLOR)
+            embed.description = "Регистрация снова станет доступна."
+            view = View()
+            btn = Button(label="Возобновить регистрацию", style=ButtonStyle.success, emoji=EMOJI_PLAY)
+            async def do_resume(inter):
+                data["status"] = "active"
+                save_event(data)
+                await update_all_views(inter.bot, data)
+                await log_admin_action(inter.bot, "Возобновление", "Регистрация открыта", inter.user)
+                await inter.response.send_message("<:freeiconpowerbutton4943421:1473441364170772674> Регистрация ВОЗОБНОВЛЕНА.", ephemeral=True)
+            btn.callback = do_resume
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+        # === KICK ===
         elif val == "kick":
-            await interaction.response.send_modal(SmartManageModal("kick_user", self.event_id, interaction.message))
-        # ... остальные опции ...
-        
-        # Поскольку код большой, я оставил ключевые вызовы. Логика SmartManageModal уже делает всю работу.
+            embed = Embed(title="<:freeicongrimreaper7515728:1473373897855340617> Кик участника", color=AUX_COLOR)
+            embed.description = (
+                "Укажите номер участника для удаления.\n"
+                "**Примеры:**\n"
+                "• `5` — удалить 5-го из основы\n"
+                "• `р5` или `r5` — удалить 5-го из резерва"
+            )
+            view = View()
+            btn = Button(label="Удалить участника", style=ButtonStyle.danger, emoji=EMOJI_DOOR_BTN)
+            btn.callback = lambda i: i.response.send_modal(SmartManageModal("kick_user", self.event_id, interaction.message))
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+        elif val == "vods":
+            embed = Embed(title="<:teg:1473384504537383157> Запрос откатов", color=AUX_COLOR)
+            embed.description = (
+                "Пингует всех участников основы с просьбой отправить откат.\n"
+                "Сообщение будет отправлено в канал ивента."
+            )
+            view = View()
+            btn = Button(label="Отправить запрос", style=ButtonStyle.primary, emoji=EMOJI_CAMERA_BTN)
+            
+            async def do_vods(inter):
+                struct = get_participants_struct(data)
+                if not struct["main"]:
+                    return await inter.response.send_message("В основе никого нет.", ephemeral=True)
+                
+                pings = " ".join([f"<@{p['user_id']}>" for p in struct["main"]])
+                msg_content = f"<:teg:1473384504537383157> **Запрос откатов!**\n\n{pings}\n\n Отправлять откаты сюда: <#{VOD_SUBMIT_CHANNEL_ID}>"
+                
+                target = inter.guild.get_channel(data["channel_id"])
+                await target.send(msg_content)
+                await log_admin_action(inter.bot, "Запрос откатов", "Пинг участников для запроса отката", inter.user)
+                await inter.response.send_message("Запрос отправлен.", ephemeral=True)
+            
+            btn.callback = do_vods
+            view.add_item(btn)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
         await interaction.message.edit(view=OtherOptionsView(self.event_id))
         return False
 
 class EventUserView(View):
-    """Публичная панель для Button-ивентов."""
     def __init__(self, event_id):
         super().__init__(timeout=None)
         self.event_id = event_id
@@ -756,29 +806,31 @@ class EventUserView(View):
     @disnake.ui.button(label="Записаться", style=ButtonStyle.success, emoji=EMOJI_JOIN, custom_id="usr_join")
     async def join(self, button, interaction):
         data = get_event_by_id(self.event_id)
-        if not data or data["status"] != "active": 
-            return await interaction.response.send_message("Регистрация недоступна.", ephemeral=True)
+        if not data: return await interaction.response.send_message("Ивент не найден.", ephemeral=True)
+        if data["status"] == "paused": return await interaction.response.send_message("<:freeiconstop394592:1473441364938194976> Регистрация приостановлена.", ephemeral=True)
+        if data["status"] != "active": return await interaction.response.send_message("<:freeicongravestone7515635:1473361769987707013> Регистрация закрыта.", ephemeral=True)
         
         struct = get_participants_struct(data)
         uid = interaction.user.id
         wl = get_global_whitelist()
         
-        # Проверка дубликатов
-        all_users = struct["main"] + struct["reserve"]
-        if any(p["user_id"] == uid for p in all_users):
-            return await interaction.response.send_message("Вы уже записаны.", ephemeral=True)
-            
         has_priority = False
         if interaction.guild:
             role = interaction.guild.get_role(EVENTS_PRIORITY_ROLE_ID)
-            if role and role in interaction.user.roles: has_priority = True
-
+            if role and role in interaction.user.roles:
+                has_priority = True
+        
+        all_users = struct["main"] + struct["reserve"]
+        if any(p["user_id"] == uid for p in all_users):
+            return await interaction.response.send_message("Вы уже записаны.", ephemeral=True)
+        
+        # Ключ назван join_time
         user_data = {"user_id": uid, "join_time": int(time.time())}
         msg = ""
 
         if uid in wl or has_priority:
             struct["main"].insert(0, user_data)
-            msg = "Вы записаны в **ОСНОВУ**!"
+            msg = "Вы записаны в **ОСНОВУ** (Priority/WL)!"
             struct = push_to_reserve_if_full(struct, data["max_slots"])
         else:
             struct["reserve"].append(user_data)
@@ -786,31 +838,174 @@ class EventUserView(View):
         
         data["participants"] = struct
         save_event(data)
-        await update_event_display(interaction.bot, self.event_id)
+        await update_all_views(interaction.bot, data)
         await log_user_action(interaction.bot, "Вход", f"Статус: {msg}", interaction.user, False)
         await interaction.response.send_message(msg, ephemeral=True)
 
     @disnake.ui.button(label="Покинуть список", style=ButtonStyle.danger, custom_id="usr_leave")
     async def leave(self, button, interaction):
+        await interaction.response.defer(ephemeral=True)
+        
         data = get_event_by_id(self.event_id)
-        if not data: return
+        if not data: 
+            return await interaction.followup.send("Ивент не найден.", ephemeral=True)
+        
         struct = get_participants_struct(data)
         uid = interaction.user.id
         
-        # Удаление (упрощенно)
+        all_participants = struct["main"] + struct["reserve"]
+        user_data = next((p for p in all_participants if p["user_id"] == uid), None)
+        
+        if not user_data:
+            return await interaction.followup.send("Вас нет в списке участников.", ephemeral=True)
+        
+        # Исправлено: берем join_time вместо time
+        join_timestamp = user_data.get("join_time", 0)
+        current_time = int(time.time())
+        wait_time = 60
+        
+        if current_time - join_timestamp < wait_time:
+            remaining = wait_time - (current_time - join_timestamp)
+            return await interaction.followup.send(
+                f"Вы не можете покинуть список так быстро! Подождите еще {remaining} сек.", 
+                ephemeral=True
+            )
+
         struct["main"] = [p for p in struct["main"] if p["user_id"] != uid]
         struct["reserve"] = [p for p in struct["reserve"] if p["user_id"] != uid]
         
-        # Подтянуть из резерва
         if len(struct["main"]) < data["max_slots"] and struct["reserve"]:
             struct["main"].append(struct["reserve"].pop(0))
-            
+        
         data["participants"] = struct
         save_event(data)
-        await update_event_display(interaction.bot, self.event_id)
-        await interaction.response.send_message("Вы вышли из списка.", ephemeral=True)
+        
+        await update_all_views(interaction.bot, data)
+        await log_user_action(interaction.bot, "Выход", "Покинул ивент", interaction.user, True)
+        
+        await interaction.followup.send("Вы вышли из списка.", ephemeral=True)
 
-# --- THREAD EVENT LISTENER ---
+
+class MainAdminView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @disnake.ui.button(label="Начать регистрацию", style=ButtonStyle.secondary, emoji=EMOJI_DICE, row=0, custom_id="start_reg_btn")
+    async def start_reg(self, button, interaction):
+        await interaction.response.send_modal(EventCreateModal())
+
+    @disnake.ui.button(label="Завершить и очистить", style=ButtonStyle.danger, emoji=EMOJI_TRASH, row=0, custom_id="close_evt_btn")
+    async def close_evt(self, button, interaction):
+        data = get_current_event()
+        if not data: return await interaction.response.send_message("Нет активного мероприятия.", ephemeral=True)
+        
+        try:
+            chan = interaction.guild.get_channel(data["channel_id"])
+            msg = await chan.fetch_message(data["message_id"])
+            await msg.delete() 
+        except: pass
+        
+        await log_event_history(interaction.bot, data)
+        await log_admin_action(interaction.bot, "Ивент завершен", f"Имя: **{data['name']}**", interaction.user)
+        
+        close_all_active_events()
+        await update_all_views(interaction.bot, None)
+        await interaction.response.send_message("Ивент завершен и удален.", ephemeral=True)
+
+    @disnake.ui.button(label="Внести в основной список", style=ButtonStyle.secondary, emoji=EMOJI_PLUS, row=1, custom_id="add_main_btn")
+    async def add_to_main(self, button, interaction):
+        data = get_current_event()
+        if not data: return await interaction.response.send_message("Сначала создайте ивент.", ephemeral=True)
+        await interaction.response.send_modal(SmartManageModal("reserve_to_main", data["id"]))
+
+    @disnake.ui.button(label="Перевести в резервный список", style=ButtonStyle.secondary, emoji=EMOJI_MINUS, row=1, custom_id="to_res_btn")
+    async def move_to_res(self, button, interaction):
+        data = get_current_event()
+        if not data: return await interaction.response.send_message("Сначала создайте ивент.", ephemeral=True)
+        await interaction.response.send_modal(SmartManageModal("main_to_reserve", data["id"]))
+
+    @disnake.ui.button(label="Проверка голосового канала", style=ButtonStyle.secondary, emoji=EMOJI_MIC, row=2, custom_id="chk_voice_btn")
+    async def check_voice(self, button, interaction):
+        data = get_current_event()
+        if not data: return await interaction.response.send_message("Нет активного ивента.", ephemeral=True)
+        
+        voice = interaction.guild.get_channel(EVENT_VOICE_CHANNEL_ID)
+        if not voice: 
+            return await interaction.response.send_message(f"Канал {EVENT_VOICE_CHANNEL_ID} не найден.", ephemeral=True)
+        
+        struct = get_participants_struct(data)
+        voice_members = {m.id for m in voice.members}
+        
+        missing_ids = [p["user_id"] for p in struct["main"] if p["user_id"] not in voice_members]
+        
+        if missing_ids:
+            missing_text = ""
+            for uid in missing_ids:
+                try:
+                    idx = next(i for i, p in enumerate(struct["main"]) if p["user_id"] == uid) + 1
+                    missing_text += f"{idx}) <@{uid}>\n"
+                except: pass
+            
+            if len(missing_text) > 1900:
+                missing_text = missing_text[:1900].rstrip(",\n") + "\n..."
+            else:
+                missing_text = missing_text.rstrip()
+            
+            await interaction.response.send_message(f"**Отсутствуют в войсе:**\n{missing_text}", ephemeral=True)
+        else:
+            await interaction.response.send_message("Все участники основы в войсе!", ephemeral=True)
+
+    @disnake.ui.button(label="Тегнуть основной список", style=ButtonStyle.secondary, emoji=EMOJI_CHAT, row=2, custom_id="tag_main_btn")
+    async def tag_main(self, button, interaction):
+        data = get_current_event()
+        if not data: return
+        
+        struct = get_participants_struct(data)
+        if not struct["main"]: 
+            return await interaction.response.send_message("Основа пуста.", ephemeral=True)
+        
+        msg = f"**Внимание, основной состав!** {' '.join([f'<@{p['user_id']}>' for p in struct['main']])}"
+        event_channel = interaction.guild.get_channel(data["channel_id"])
+        await event_channel.send(msg)
+        await log_admin_action(interaction.bot, "Тег участников", "Тег основы в канале", interaction.user)
+        await interaction.response.send_message("Тег отправлен.", ephemeral=True)
+
+    @disnake.ui.button(label="Пингануть everyone", style=ButtonStyle.secondary, emoji=EMOJI_MEGAPHONE, row=3, custom_id="ping_ev_btn")
+    async def ping_everyone(self, button, interaction):
+        data = get_current_event()
+        if not data: return
+        
+        embed = Embed(color=AUX_COLOR)
+        channel_mention = f"<#{data['channel_id']}>"
+        embed.description = (
+            f"Регистрация откраты: {channel_mention}\n"
+            f"Время: **{data['event_time']}**"
+        )
+        
+        target = interaction.guild.get_channel(EVENTS_TAG_CHANNEL_ID)
+        if not target:
+            target = interaction.guild.get_channel(data["channel_id"])
+        
+        await target.send(content=f"@everyone **{data['name']}**", embed=embed)
+        await log_admin_action(interaction.bot, "Пинг @everyone", "Анонс ивента", interaction.user)
+        await interaction.response.send_message("Анонс отправлен.", ephemeral=True)
+
+    @disnake.ui.button(label="Меню управления", style=ButtonStyle.primary, emoji=EMOJI_GEAR, row=3, custom_id="other_btn")
+    async def other(self, button, interaction):
+        data = get_current_event()
+        if not data: return await interaction.response.send_message("Нет активного ивента.", ephemeral=True)
+        
+        embed = Embed(title="<:freeiconinvitation7515655:1473373288724959285> Меню управления", color=AUX_COLOR)
+        desc = (
+            "**<:ddd:1473378828427460618> White List** — управление WL ID и массовый перенос\n"
+            "**<:freeiconplus1828819:1473433100737319114> Внести в резерв** — ручной ввод участников\n"
+            "**<:freeicondrawing14958309:1473426934732947560> Редактировать Embed** — изменить название, время, описание, картинку\n"
+            "**<:freeiconstop394592:1473441364938194976> Пауза / <:freeiconpowerbutton4943421:1473441364170772674> Старт** — остановить/возобновить регистрацию\n"
+            "**<:freeicongrimreaper7515728:1473373897855340617> Кик** — удалить участника\n"
+            "**<:teg:1473384504537383157> Запрос откатов** — пинг участников для запроса отката\n"
+        )
+        embed.description = desc
+        await interaction.response.send_message(embed=embed, view=OtherOptionsView(data["id"]), ephemeral=False)
 
 class EventsCog(commands.Cog):
     def __init__(self, bot):
@@ -820,102 +1015,36 @@ class EventsCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.wait_until_ready()
-        
-        # Регистрируем Launcher
-        self.bot.add_view(EventLauncherView())
-        
-        # Восстанавливаем Views для всех активных ивентов
-        active_events = get_active_events()
-        for evt in active_events:
-            self.bot.add_view(EventControlView(evt["id"]))
-            if evt["type"] == "button":
-                self.bot.add_view(EventUserView(evt["id"]))
-        
-        # Обновляем Launcher в канале админов
-        chan = self.bot.get_channel(EVENTS_ADMIN_CHANNEL_ID)
-        if chan:
-            launcher_msg = None
-            async for msg in chan.history(limit=50): # Ищем подальше
-                if msg.author == self.bot.user and msg.components:
-                    try:
-                        # Ищем кнопку создания
-                        if msg.components[0].children[0].custom_id == "launcher_create":
-                            launcher_msg = msg
-                            break
-                    except: pass
+        try:
+            self.bot.add_view(MainAdminView())
+            current = get_current_event()
+            if current:
+                self.bot.add_view(EventUserView(current["id"]))
             
-            embeds = generate_admin_embeds(None, bot=self.bot)
-            if launcher_msg:
-                await launcher_msg.edit(embeds=embeds, view=EventLauncherView())
-            else:
-                await chan.send(embeds=embeds, view=EventLauncherView())
+            chan = self.bot.get_channel(EVENTS_ADMIN_CHANNEL_ID)
+            if chan:
+                panel_msg = None
+                async for msg in chan.history(limit=10):
+                    if msg.author == self.bot.user and msg.components:
+                         try:
+                             if msg.components[0].children[0].custom_id == "start_reg_btn":
+                                 panel_msg = msg
+                                 break
+                         except: pass
+                
+                embeds = generate_admin_embeds(current, bot=self.bot)
+                if panel_msg:
+                    await panel_msg.edit(embeds=embeds, view=MainAdminView())
+                else:
+                    await chan.send(embeds=embeds, view=MainAdminView())
+        except Exception as e:
+            print(f"[EVENTS] Error: {e}")
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        """Обработка реакций для ивентов типа Thread."""
-        if payload.member.bot: return
-        
-        # 1. Проверяем, что это реакция в ветке активного ивента
-        channel_id = payload.channel_id
-        active_events = get_active_events()
-        
-        # Ищем ивент, у которого thread_id совпадает с каналом реакции
-        event = next((e for e in active_events if e["thread_id"] == channel_id and e["type"] == "thread"), None)
-        if not event: return
-
-        # 2. Проверяем, что это реакция админа (или человека с правами)
-        # Упрощенно: проверяем права manage_events в гильдии
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-        if not member.guild_permissions.administrator: return # Или проверка роли
-        
-        # 3. Получаем сообщение, на которое поставили реакцию
-        channel = guild.get_channel(channel_id)
-        try: message = await channel.fetch_message(payload.message_id)
-        except: return
-        
-        # 4. Проверяем контент сообщения ("+")
-        if message.content.strip() != "+": return
-        
-        # 5. Обрабатываем добавление
-        target_user = message.author
-        if target_user.bot: return
-        
-        struct = get_participants_struct(event)
-        all_p = struct["main"] + struct["reserve"]
-        if any(p["user_id"] == target_user.id for p in all_p): return # Уже записан
-        
-        user_data = {"user_id": target_user.id, "join_time": int(time.time())}
-        action = ""
-        
-        emoji_str = str(payload.emoji)
-        
-        if REACTION_ACCEPT in emoji_str: # Галочка -> Основа
-            struct["main"].append(user_data) # Добавляем в конец или начало? Обычно по очереди
-            # Или учитываем WL? В треде обычно ручное управление, добавим просто в конец
-            struct = push_to_reserve_if_full(struct, event["max_slots"])
-            action = "Основа"
-            await message.add_reaction("✅") # Подтверждение ботом
-            
-        elif REACTION_RESERVE in emoji_str: # Слон -> Резерв
-            struct["reserve"].append(user_data)
-            action = "Резерв"
-            await message.add_reaction("🐘")
-        
-        else:
-            return 
-            
-        event["participants"] = struct
-        save_event(event)
-        await update_event_display(self.bot, event["id"])
-        await log_user_action(self.bot, f"Вход (Thread {action})", f"User: {target_user.mention}", target_user, False)
-
-    @commands.command(name="event_reset")
+    @commands.command(name="event")
     @commands.has_permissions(administrator=True)
-    async def event_reset(self, ctx):
-        """Принудительный сброс Launcher."""
+    async def event_panel(self, ctx):
         await ctx.message.delete()
-        await ctx.send(embeds=generate_admin_embeds(None, bot=self.bot), view=EventLauncherView())
+        await ctx.send(embeds=generate_admin_embeds(None), view=MainAdminView())
 
 def setup(bot):
     bot.add_cog(EventsCog(bot))
