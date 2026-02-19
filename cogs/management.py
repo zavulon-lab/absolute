@@ -14,13 +14,14 @@ sys.path.append(root_dir)
 
 
 try:
-    from constants import MCL_CHANNEL_ID, CAPT_CHANNEL_ID, CATEGORY_ID, ADMIN_MANAGEMENT_CHANNEL_ID
+    from constants import MCL_CHANNEL_ID, CAPT_CHANNEL_ID, CATEGORY_ID, ADMIN_MANAGEMENT_CHANNEL_ID, TIER_CHECK_ROLE_ID
     from database import get_private_channel, set_private_channel
 except ImportError:
     MCL_CHANNEL_ID = 1441434753369636894
     CAPT_CHANNEL_ID = 1441434661237690509
     ADMIN_MANAGEMENT_CHANNEL_ID = 1470910876860027021
     CATEGORY_ID = 0
+    TIER_CHECK_ROLE_ID = 0
     def get_private_channel(u): return None
     def set_private_channel(u, c): pass
 
@@ -78,14 +79,14 @@ class RollbackForm(Modal):
             private_channel = interaction.guild.get_channel(channel_id) if channel_id else None
             
             if channel_id and not private_channel:
-                 try: private_channel = await interaction.guild.fetch_channel(channel_id)
-                 except: pass
+                try: private_channel = await interaction.guild.fetch_channel(channel_id)
+                except: pass
 
             if not private_channel and CATEGORY_ID:
                 category = interaction.guild.get_channel(CATEGORY_ID)
                 if not category:
-                     try: category = await interaction.guild.fetch_channel(CATEGORY_ID)
-                     except: pass
+                    try: category = await interaction.guild.fetch_channel(CATEGORY_ID)
+                    except: pass
                 
                 if category:
                     safe_name = interaction.user.name[:90]
@@ -98,6 +99,15 @@ class RollbackForm(Modal):
                         )
                         await private_channel.set_permissions(interaction.guild.default_role, view_channel=False)
                         await private_channel.set_permissions(interaction.user, view_channel=True)
+
+                        tier_check_role = interaction.guild.get_role(int(TIER_CHECK_ROLE_ID)) if TIER_CHECK_ROLE_ID else None
+                        if tier_check_role:
+                            await private_channel.set_permissions(
+                                tier_check_role,
+                                view_channel=True,
+                                read_message_history=True
+                            )
+
                     set_private_channel(user_id, private_channel.id)
 
             if private_channel:
@@ -136,7 +146,6 @@ class ThreadSelect(StringSelect):
 
     async def callback(self, interaction: Interaction):
         thread_id = int(self.values[0])
-        # Ищем имя для красоты
         selected_option = next((opt for opt in self.options if opt.value == self.values[0]), None)
         thread_name = selected_option.label if selected_option else "Unknown"
         
@@ -145,7 +154,7 @@ class ThreadSelect(StringSelect):
 
 class ThreadSelectView(View):
     def __init__(self, threads, page=0):
-        super().__init__(timeout=180) # Тайм-аут 3 минуты
+        super().__init__(timeout=180)
         self.threads = sorted(threads, key=lambda t: t.created_at or datetime.min, reverse=True)
         self.page = page
         self.items_per_page = 25
@@ -163,8 +172,8 @@ class ThreadSelectView(View):
         if chunk:
             self.add_item(ThreadSelect(self, chunk))
         else:
-             sel = StringSelect(custom_id="empty", placeholder="Нет доступных веток", options=[SelectOption(label="Пусто", value="none")], disabled=True)
-             self.add_item(sel)
+            sel = StringSelect(custom_id="empty", placeholder="Нет доступных веток", options=[SelectOption(label="Пусто", value="none")], disabled=True)
+            self.add_item(sel)
 
         if self.total_pages > 1:
             prev_btn = Button(
@@ -244,8 +253,8 @@ class CategorySelect(StringSelect):
 
         threads = channel.threads
         if not threads:
-             try: threads = await channel.active_threads()
-             except: pass
+            try: threads = await channel.active_threads()
+            except: pass
 
         if threads:
             now = datetime.now(timezone.utc)
@@ -256,7 +265,7 @@ class CategorySelect(StringSelect):
                 created_at = t.created_at
                 if created_at:
                     if created_at.tzinfo is None:
-                         created_at = created_at.replace(tzinfo=timezone.utc)
+                        created_at = created_at.replace(tzinfo=timezone.utc)
                     
                     if created_at > cutoff:
                         filtered_threads.append(t)
@@ -341,11 +350,9 @@ class AdminChannelSelect(StringSelect):
             
         if channel:
             await interaction.response.send_modal(AdminCreateThreadModal(channel))
-            
             asyncio.create_task(self.reset_menu(interaction.message))
         else:
             await interaction.response.send_message(f"Канал {channel_id} не найден.", ephemeral=True)
-            # Тоже сбрасываем, чтобы убрать выделение
             asyncio.create_task(self.reset_menu(interaction.message))
 
     async def reset_menu(self, message):
@@ -357,7 +364,6 @@ class AdminChannelSelect(StringSelect):
             print(f"Ошибка сброса админ-меню: {e}")
 
 
-
 class AdminChannelSelectView(View):
     def __init__(self):
         super().__init__(timeout=60)
@@ -367,7 +373,6 @@ class AdminChannelSelectView(View):
 class AdminButtons(View):
     def __init__(self):
         super().__init__(timeout=None)
-
         self.add_item(AdminChannelSelect())
 
 
@@ -384,11 +389,10 @@ class ManagementCog(commands.Cog):
             channel_id = int(ADMIN_MANAGEMENT_CHANNEL_ID)
             admin_channel = self.bot.get_channel(channel_id)
             if not admin_channel:
-                 try: admin_channel = await self.bot.fetch_channel(channel_id)
-                 except: pass
+                try: admin_channel = await self.bot.fetch_channel(channel_id)
+                except: pass
 
             if admin_channel:
-                # --- УЛУЧШЕННЫЙ ЭМБЕД ---
                 embed = Embed(
                     title="<:freeiconnote5326571:1473375425890877511> Панель управления событиями",
                     description=(
@@ -399,7 +403,6 @@ class ManagementCog(commands.Cog):
                     color=disnake.Color.from_rgb(54, 57, 63),
                 )
                 
-                # Добавляем поля для красоты и информативности
                 embed.add_field(
                     name="<:freeiconwebcreation5738087:1473438765442797688> Создание веток",
                     value="Создает приватные ветки для загрузки откатов с ивентов (MCL, Капт).",
@@ -409,7 +412,6 @@ class ManagementCog(commands.Cog):
                 embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1462165491278938204/1473439006107897896/free-icon-content-creation-17173597.png?ex=69963682&is=6994e502&hm=d25b1aa389567191ea2bf6dc08d85ab633deea7256d5405c2012b4611bb9f9b4&")
                 embed.set_footer(text="Absolute Famq", icon_url=self.bot.user.display_avatar.url)
                 
-                # Логика обновления сообщения (без изменений)
                 last_msg = None
                 async for msg in admin_channel.history(limit=5):
                     if msg.author == self.bot.user:
