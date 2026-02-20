@@ -18,7 +18,6 @@ DB_PATH = "bot_data.db"
 
 @contextmanager
 def get_db_connection():
-    """Контекстный менеджер для работы с БД"""
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -38,8 +37,6 @@ def get_db_connection():
 def init_db():
     with get_db_connection() as conn:
         cursor = conn.cursor()
-
-        # ── 1. Создание таблиц ────────────────────────────────────────────────
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS private_channels (
@@ -125,16 +122,12 @@ def init_db():
             )
         ''')
 
-        # ── 2. Миграции (ALTER TABLE) — ОБЯЗАТЕЛЬНО ДО создания индексов ─────
-
-        # giveaways: thumbnail_url
         cursor.execute("PRAGMA table_info(giveaways)")
         giveaway_cols = {row[1] for row in cursor.fetchall()}
         if "thumbnail_url" not in giveaway_cols:
             cursor.execute("ALTER TABLE giveaways ADD COLUMN thumbnail_url TEXT")
             logger.info("Миграция: добавлена колонка thumbnail_url в giveaways")
 
-        # staff_activity: role_type — главная причина ошибки
         cursor.execute("PRAGMA table_info(staff_activity)")
         activity_cols = {row[1] for row in cursor.fetchall()}
         if "role_type" not in activity_cols:
@@ -142,9 +135,6 @@ def init_db():
                 "ALTER TABLE staff_activity ADD COLUMN role_type TEXT NOT NULL DEFAULT 'recruiter'"
             )
             logger.info("Миграция: добавлена колонка role_type в staff_activity")
-
-        # ── 3. Индексы — ТОЛЬКО ПОСЛЕ миграций ───────────────────────────────
-        # Теперь role_type гарантированно существует в таблице
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_staff_activity_lookup
@@ -157,7 +147,6 @@ def init_db():
         """)
 
         logger.info("База данных инициализирована")
-
 
 
 # ========== ЛИЧНЫЕ КАНАЛЫ ==========
@@ -414,17 +403,6 @@ def set_applications_status(enabled: bool):
 
 
 # ========== МОНИТОРИНГ АКТИВНОСТИ СОТРУДНИКОВ ==========
-#
-#  role_type = 'recruiter'   → действия в заявках (review_view.py)
-#              'cheathunter' → действия верификации на ПО (verification.py)
-#
-#  Таблица action_type по ролям:
-#   recruiter:   accept_final, deny, call, chat_created, review
-#   cheathunter: verify_check (создал канал проверки),
-#                verify_accept (выдал роль),
-#                verify_reject (отказал сразу),
-#                verify_reject_final (отказал после проверки)
-
 
 def log_staff_action(
     guild_id: int,
@@ -432,17 +410,8 @@ def log_staff_action(
     action_type: str,
     target_user_id: Optional[int] = None,
     extra: Optional[str] = None,
-    role_type: str = "recruiter",   # 'recruiter' или 'cheathunter'
+    role_type: str = "recruiter",
 ):
-    """
-    Логирует действие сотрудника.
-
-    Вызов для рекрутёра (review_view.py):
-        log_staff_action(..., role_type="recruiter")
-
-    Вызов для чит-хантера (verification.py):
-        log_staff_action(..., role_type="cheathunter")
-    """
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -463,12 +432,8 @@ def get_staff_stats(
     guild_id: int,
     staff_id: int,
     days: int = 7,
-    role_type: Optional[str] = None,   # None = все действия сотрудника
+    role_type: Optional[str] = None,
 ) -> Dict:
-    """
-    Возвращает статистику сотрудника за последние N дней.
-    Если role_type указан — фильтрует только по этому типу роли.
-    """
     since = (datetime.now() - timedelta(days=days)).isoformat(sep=" ")
 
     with get_db_connection() as conn:
@@ -492,7 +457,6 @@ def get_staff_stats(
         cursor.execute(f"SELECT COUNT(*) FROM staff_activity WHERE {where}", params)
         total = cursor.fetchone()[0]
 
-        # Последнее действие — без фильтра по role_type, чтобы всегда было актуально
         cursor.execute("""
             SELECT action_type, created_at FROM staff_activity
             WHERE guild_id = ? AND staff_id = ?
@@ -500,7 +464,6 @@ def get_staff_stats(
         """, (int(guild_id), int(staff_id)))
         last = cursor.fetchone()
 
-    # ── Рекрутёрские метрики ──────────────────────────────────────────────────
     recruiter_stats = {
         "accepts":  counts.get("accept", 0) + counts.get("accept_final", 0),
         "denies":   counts.get("deny", 0),
@@ -509,19 +472,16 @@ def get_staff_stats(
         "reviews":  counts.get("review", 0),
     }
 
-    # ── Чит-хантерские метрики ────────────────────────────────────────────────
     hunter_stats = {
-        "verify_checks":        counts.get("verify_check", 0),         # создал канал проверки
-        "verify_accepts":       counts.get("verify_accept", 0),        # выдал роль
-        "verify_rejects":       counts.get("verify_reject", 0),        # отказал сразу
-        "verify_rejects_final": counts.get("verify_reject_final", 0),  # отказал после проверки
+        "verify_checks":        counts.get("verify_check", 0),
+        "verify_accepts":       counts.get("verify_accept", 0),
+        "verify_rejects":       counts.get("verify_reject", 0),
+        "verify_rejects_final": counts.get("verify_reject_final", 0),
     }
 
     return {
         "total": total,
-        # рекрутёр
         **recruiter_stats,
-        # чит-хантер
         **hunter_stats,
         "last_action":      last[0] if last else None,
         "last_action_time": last[1] if last else None,
@@ -532,12 +492,8 @@ def get_all_staff_stats(
     guild_id: int,
     staff_members: List,
     days: int = 7,
-    role_type: Optional[str] = None,   # передай 'recruiter' или 'cheathunter'
+    role_type: Optional[str] = None,
 ) -> List[Dict]:
-    """
-    Возвращает список сотрудников с их статистикой.
-    role_type позволяет показывать только нужные действия для каждого отдела.
-    """
     result = []
     for member in staff_members:
         if member.bot:
